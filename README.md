@@ -1,7 +1,7 @@
 <div align="center">
 
 <div align="center">
-  <img src="./assets/images/logo.png" alt="BankRoll Logo" width="120" height="120" style="border-radius: 20px;"/>
+  <img src="./assets/images/logo_rounded.png" alt="BankRoll Logo" width="260" height="260" />
 </div>
 </br>
 
