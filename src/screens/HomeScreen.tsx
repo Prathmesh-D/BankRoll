@@ -23,6 +23,7 @@ import { AnimatedPressable } from '../components/AnimatedPressable';
 import { FloatingView } from '../components/FloatingView';
 import type { SessionSummary } from '../types/session';
 import { BrutalLoader } from '../components/BrutalLoader';
+import { playSound } from '../utils/SoundManager';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -47,6 +48,7 @@ export default function HomeScreen() {
   }, [titleOpacity, titleY]);
 
   const handleNewGame = useCallback(() => {
+    playSound('GameStart');
     setIsConnecting(true);
     setTimeout(() => {
       setIsConnecting(false);
@@ -69,7 +71,9 @@ export default function HomeScreen() {
       setIsConnecting(false);
       if (result === 'ok') {
         setRestoreError('');
-        navigation.navigate('Dashboard');
+        const status = useGameStore.getState().session?.status;
+        if (status === 'ended') navigation.navigate('GameSummary');
+        else navigation.navigate('Dashboard');
       } else {
         setRestoreError('No game found.');
       }
@@ -81,7 +85,14 @@ export default function HomeScreen() {
     setTimeout(() => {
       const result = restoreSession(summary.sessionCode);
       setIsConnecting(false);
-      if (result === 'ok') navigation.navigate('Dashboard');
+      if (result === 'ok') {
+        const restoredStatus = useGameStore.getState().session?.status;
+        if (restoredStatus === 'ended') {
+          navigation.navigate('GameSummary');
+        } else {
+          navigation.navigate('Dashboard');
+        }
+      }
     }, 500);
   }, [restoreSession, navigation]);
 
@@ -106,43 +117,55 @@ export default function HomeScreen() {
     }
   };
 
-  const renderSession = useCallback(({ item, index }: { item: SessionSummary, index: number }) => (
-    <AnimatedPressable
-      style={[styles.sessionCard, index > 0 && styles.sessionCardArchived]}
-      onPress={() => handleSessionRestore(item)}
-    >
-      <View style={styles.sessionCardHeader}>
-        <View style={styles.sessionCardTitleBox}>
-          <Text style={styles.sessionCardTitle}>{getEditionName(item.edition)}</Text>
-          <Text style={styles.sessionCardMeta}>Last played {formatDate(item.updatedAt)}</Text>
-        </View>
-        <View style={styles.sessionHeaderRight}>
-          <View style={styles.sessionIconBox}>
-            <Text style={styles.sessionIcon}>{EDITION_FLAGS[item.edition] ?? '🎲'}</Text>
+  const renderSession = useCallback(({ item, index }: { item: SessionSummary, index: number }) => {
+    // Treat any missing status or 'active' explicitly as active.
+    const isEnded = item.status === 'ended';
+    const isArchived = item.status === 'archived';
+    
+    return (
+      <AnimatedPressable
+        style={[
+          styles.sessionCard, 
+          index > 0 && styles.sessionCardArchived,
+          isEnded && { borderStyle: 'dotted' }
+        ]}
+        onPress={() => handleSessionRestore(item)}
+      >
+        <View style={styles.sessionCardHeader}>
+          <View style={styles.sessionCardTitleBox}>
+            <Text style={styles.sessionCardTitle}>{getEditionName(item.edition)}</Text>
+            <Text style={styles.sessionCardMeta}>
+              {isEnded ? 'Ended ' : 'Last played '}{formatDate(item.updatedAt)}
+            </Text>
+          </View>
+          <View style={styles.sessionHeaderRight}>
+            <View style={styles.sessionIconBox}>
+              <Text style={styles.sessionIcon}>{EDITION_FLAGS[item.edition] ?? '🎲'}</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.sessionCardFooter}>
-        <View style={styles.playerCountBadge}>
-          <Text style={styles.playerCountText}>{item.playerNames.length} PLAYERS</Text>
+        <View style={styles.sessionCardFooter}>
+          <View style={styles.playerCountBadge}>
+            <Text style={styles.playerCountText}>{item.playerNames.length} PLAYERS</Text>
+          </View>
+          <View style={styles.footerActions}>
+            <AnimatedPressable
+              style={styles.deleteBtn}
+              onPress={() => {
+                setSessionToDelete(item.id);
+              }}
+            >
+              <Text style={styles.deleteBtnText}>REMOVE</Text>
+            </AnimatedPressable>
+            <FloatingView style={styles.resumeBtn} amplitude={isEnded ? 0 : 2} duration={2000}>
+              <Text style={styles.resumeBtnText}>{isEnded ? 'VIEW STATS' : 'RESUME'}</Text>
+            </FloatingView>
+          </View>
         </View>
-        <View style={styles.footerActions}>
-          <AnimatedPressable
-            style={styles.deleteBtn}
-            onPress={() => {
-              setSessionToDelete(item.id);
-            }}
-          >
-            <Text style={styles.deleteBtnText}>REMOVE</Text>
-          </AnimatedPressable>
-          <FloatingView style={styles.resumeBtn} amplitude={2} duration={2000}>
-            <Text style={styles.resumeBtnText}>RESUME</Text>
-          </FloatingView>
-        </View>
-      </View>
-    </AnimatedPressable>
-  ), [handleSessionRestore, setSessionToDelete]);
+      </AnimatedPressable>
+    );
+  }, [handleSessionRestore, setSessionToDelete]);
 
   return (
     <SafeAreaView style={styles.safe}>

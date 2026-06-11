@@ -22,6 +22,10 @@
 @rem
 
 @if "%DEBUG%"=="" @echo off
+
+@rem Force JAVA_HOME to installed OpenJDK 17 to fix React Native Kotlin toolchain
+set JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.19.10-hotspot
+
 @rem ##########################################################################
 @rem
 @rem  Gradle startup script for Windows

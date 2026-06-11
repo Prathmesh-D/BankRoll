@@ -23,9 +23,9 @@ export default function HouseRulesPanel({ onClose }: Props) {
 
   const RULES = [
     {
-      key: 'noBankruptcy' as const,
-      label: 'No Bankruptcy',
-      description: 'Players can go negative and owe debt. No eliminations.',
+      key: 'allowNegative100' as const,
+      label: 'Allow -$100 Overdraft',
+      description: 'Players can drop to -$100. If off, minimum balance is 0.',
       icon: '🏛',
     },
     {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,10 +16,15 @@ import { useGameStore } from '../store/useGameStore';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../theme/tokens';
 import { formatBalance } from '../domain/currencyFormatter';
 import { AVATAR_IMAGES } from '../domain/defaults';
+import { playSound } from '../utils/SoundManager';
 
 export default function GameSummary() {
   const navigation = useNavigation<any>();
   const { session, endGame, deleteSession } = useGameStore();
+
+  useEffect(() => {
+    playSound('finish');
+  }, []);
 
   if (!session) {
     return (

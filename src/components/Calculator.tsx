@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useCalculatorStore } from '../store/useCalculatorStore';
+import { playSound } from '../utils/SoundManager';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../theme/tokens';
 
 export default function Calculator() {
@@ -16,8 +17,8 @@ export default function Calculator() {
   const renderKey = (label: string, onPress: () => void, variant?: 'operator' | 'equals' | 'pay' | 'memory') => (
     <TouchableOpacity
       key={label}
-      style={[styles.key, variant && styles[`key_${variant}` as keyof typeof styles]]}
-      onPress={onPress}
+      style={[styles.key, variant && (styles[`key_${variant}` as keyof typeof styles] as any)]}
+      onPress={() => { playSound('touch'); onPress(); }}
       activeOpacity={0.7}
     >
       <Text style={[styles.keyText, variant === 'equals' && styles.keyTextEquals]}>
@@ -44,7 +45,7 @@ export default function Calculator() {
         </View>
 
         {/* Memory row */}
-        <View style={styles.memoryRow}>
+        <View style={[styles.row, { marginBottom: Spacing.sm }]}>
           {renderKey('MC', memoryClear, 'memory')}
           {renderKey('MR', memoryRecall, 'memory')}
           {renderKey('M+', memoryStore, 'memory')}
@@ -54,25 +55,30 @@ export default function Calculator() {
 
         {/* Numpad grid */}
         <View style={styles.grid}>
-          {renderKey('7', () => appendDigit('7'))}
-          {renderKey('8', () => appendDigit('8'))}
-          {renderKey('9', () => appendDigit('9'))}
-          {renderKey('÷', () => appendOperator('/'), 'operator')}
-
-          {renderKey('4', () => appendDigit('4'))}
-          {renderKey('5', () => appendDigit('5'))}
-          {renderKey('6', () => appendDigit('6'))}
-          {renderKey('×', () => appendOperator('*'), 'operator')}
-
-          {renderKey('1', () => appendDigit('1'))}
-          {renderKey('2', () => appendDigit('2'))}
-          {renderKey('3', () => appendDigit('3'))}
-          {renderKey('−', () => appendOperator('-'), 'operator')}
-
-          {renderKey('0', () => appendDigit('0'))}
-          {renderKey('.', appendDecimal)}
-          {renderKey('=', calculate, 'equals')}
-          {renderKey('+', () => appendOperator('+'), 'operator')}
+          <View style={styles.row}>
+            {renderKey('7', () => appendDigit('7'))}
+            {renderKey('8', () => appendDigit('8'))}
+            {renderKey('9', () => appendDigit('9'))}
+            {renderKey('÷', () => appendOperator('/'), 'operator')}
+          </View>
+          <View style={styles.row}>
+            {renderKey('4', () => appendDigit('4'))}
+            {renderKey('5', () => appendDigit('5'))}
+            {renderKey('6', () => appendDigit('6'))}
+            {renderKey('×', () => appendOperator('*'), 'operator')}
+          </View>
+          <View style={styles.row}>
+            {renderKey('1', () => appendDigit('1'))}
+            {renderKey('2', () => appendDigit('2'))}
+            {renderKey('3', () => appendDigit('3'))}
+            {renderKey('−', () => appendOperator('-'), 'operator')}
+          </View>
+          <View style={styles.row}>
+            {renderKey('0', () => appendDigit('0'))}
+            {renderKey('.', appendDecimal)}
+            {renderKey('=', calculate, 'equals')}
+            {renderKey('+', () => appendOperator('+'), 'operator')}
+          </View>
         </View>
       </View>
     </View>
@@ -81,7 +87,11 @@ export default function Calculator() {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
     justifyContent: 'flex-end',
     zIndex: 200,
   },
@@ -123,19 +133,16 @@ const styles = StyleSheet.create({
     fontFamily: Typography.display,
     color: Colors.maroon,
   },
-  memoryRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm,
-  },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: Spacing.xs,
     marginBottom: Spacing.md,
   },
+  row: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
   key: {
-    width: '23%',
+    flex: 1,
     height: 54,
     backgroundColor: Colors.white,
     borderWidth: 2,

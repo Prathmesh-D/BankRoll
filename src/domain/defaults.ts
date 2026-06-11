@@ -5,7 +5,7 @@ import type { EditionConfig } from '../types/edition';
 export function defaultHouseRules(edition?: EditionConfig): HouseRules {
   return {
     startingBonus: edition?.salary ?? 200,
-    noBankruptcy: false,
+    allowNegative100: false,
     infiniteBankMoney: false,
     customRules: [],
   };

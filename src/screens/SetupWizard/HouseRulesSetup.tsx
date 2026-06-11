@@ -11,6 +11,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { SetupStackParamList } from '../../navigation/SetupNavigator';
+import { playSound } from '../../utils/SoundManager';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { formatBalance } from '../../domain/currencyFormatter';
 import { getEditionConfig } from '../../data/editions';
@@ -37,10 +38,10 @@ export default function HouseRulesSetup() {
 
   const RULE_DEFS = [
     {
-      key: 'noBankruptcy' as const,
+      key: 'allowNegative100' as const,
       icon: '🏛',
-      label: 'No Bankruptcy',
-      desc: 'Max -100 debt allowed. Mortgage properties to raise funds.',
+      label: 'Overdraft Limit -$100',
+      desc: 'Allow player balances to drop to -$100 instead of stopping at 0.',
     },
     {
       key: 'infiniteBankMoney' as const,
@@ -97,16 +98,16 @@ export default function HouseRulesSetup() {
               <Text style={styles.salaryValue}>{symbol}{startingBalance.toLocaleString()}</Text>
             </View>
             <View style={styles.salaryBtnRow}>
-              <TouchableOpacity style={styles.salaryBtn} onPress={() => adjustInitialBalance(-500)}>
+              <TouchableOpacity style={styles.salaryBtn} onPress={() => { playSound('touch'); adjustInitialBalance(-500); }}>
                 <Text style={styles.salaryBtnText}>-500</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.salaryBtn} onPress={() => adjustInitialBalance(-100)}>
+              <TouchableOpacity style={styles.salaryBtn} onPress={() => { playSound('touch'); adjustInitialBalance(-100); }}>
                 <Text style={styles.salaryBtnText}>-100</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.salaryBtn, styles.salaryBtnAdd]} onPress={() => adjustInitialBalance(100)}>
+              <TouchableOpacity style={[styles.salaryBtn, styles.salaryBtnAdd]} onPress={() => { playSound('touch'); adjustInitialBalance(100); }}>
                 <Text style={[styles.salaryBtnText, styles.salaryBtnAddText]}>+100</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.salaryBtn, styles.salaryBtnAdd]} onPress={() => adjustInitialBalance(500)}>
+              <TouchableOpacity style={[styles.salaryBtn, styles.salaryBtnAdd]} onPress={() => { playSound('touch'); adjustInitialBalance(500); }}>
                 <Text style={[styles.salaryBtnText, styles.salaryBtnAddText]}>+500</Text>
               </TouchableOpacity>
             </View>
@@ -129,7 +130,7 @@ export default function HouseRulesSetup() {
                     styles.salaryBtn, 
                     rules.startingBonus === amount && styles.salaryBtnSelected
                   ]} 
-                  onPress={() => setSalary(amount)}
+                  onPress={() => { playSound('touch'); setSalary(amount); }}
                 >
                   <Text style={[
                     styles.salaryBtnText,
@@ -146,7 +147,7 @@ export default function HouseRulesSetup() {
           <TouchableOpacity
             key={def.key}
             style={[styles.ruleCard, rules[def.key] && styles.ruleCardActive]}
-            onPress={() => toggleRule(def.key)}
+            onPress={() => { playSound('touch'); toggleRule(def.key); }}
             activeOpacity={0.8}
           >
             <Text style={styles.ruleIcon}>{def.icon}</Text>
@@ -167,13 +168,16 @@ export default function HouseRulesSetup() {
         <FloatingView amplitude={4} duration={1800}>
           <AnimatedPressable
             style={styles.nextButton}
-            onPress={() => navigation.navigate('BalanceReview', {
-              edition,
-              playerNames,
-              playerAvatars,
-              houseRules: rules as any,
-              startingBalance,
-            })}
+            onPress={() => {
+              playSound('touch');
+              navigation.navigate('BalanceReview', {
+                edition,
+                playerNames,
+                playerAvatars,
+                houseRules: rules as any,
+                startingBalance,
+              });
+            }}
           >
             <Text style={styles.nextButtonText}>Continue</Text>
           </AnimatedPressable>

@@ -10,6 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { SetupStackParamList } from '../../navigation/SetupNavigator';
+import { playSound } from '../../utils/SoundManager';
 import { EDITION_LIST } from '../../data/editions';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { EDITIONS } from '../../data/editions';
@@ -57,7 +58,7 @@ export default function EditionSelector() {
             <TouchableOpacity
               key={edition.id}
               style={[styles.editionCard, selected === edition.id && styles.editionCardSelected]}
-              onPress={() => setSelected(edition.id)}
+              onPress={() => { playSound('touch'); setSelected(edition.id); }}
               activeOpacity={0.8}
             >
               <Text style={styles.editionFlag}>{edition.flag}</Text>
@@ -87,7 +88,10 @@ export default function EditionSelector() {
         <FloatingView amplitude={4} duration={1800}>
           <AnimatedPressable
             style={styles.nextButton}
-            onPress={() => navigation.navigate('PlayerSetup', { edition: selected })}
+            onPress={() => {
+              playSound('touch');
+              navigation.navigate('PlayerSetup', { edition: selected });
+            }}
           >
             <Text style={styles.nextButtonText}>Continue</Text>
           </AnimatedPressable>

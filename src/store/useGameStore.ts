@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { playSound } from '../utils/SoundManager';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -289,6 +290,21 @@ export const useGameStore = create<GameStore>()(
       const sess = get().session;
       if (sess) StorageAPI.saveSession(sess);
 
+      let wentBankrupt = false;
+      if (sess) {
+        sess.entities.forEach(e => {
+          if (e.type !== 'bank' && e.balance <= 0 && (deltas[e.id] || 0) < 0) {
+            wentBankrupt = true;
+          }
+        });
+      }
+
+      if (wentBankrupt) {
+        playSound('wompwomp');
+      } else {
+        playSound('transaction');
+      }
+
       // Auto-clear undo entry after expiry
       setTimeout(() => {
         get().clearUndoEntry(txId);
@@ -359,6 +375,8 @@ export const useGameStore = create<GameStore>()(
 
       const sess = get().session;
       if (sess) StorageAPI.saveSession(sess);
+
+      playSound('whoosh');
     },
 
     clearUndoEntry: (txId: string): void => {

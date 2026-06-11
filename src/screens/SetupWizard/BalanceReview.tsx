@@ -15,6 +15,7 @@ import type { RouteProp } from '@react-navigation/native';
 import type { SetupStackParamList } from '../../navigation/SetupNavigator';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../theme/tokens';
+import { playSound } from '../../utils/SoundManager';
 import { AnimatedPressable } from '../../components/AnimatedPressable';
 import { FloatingView } from '../../components/FloatingView';
 import { PLAYER_COLOURS, DEFAULT_AVATARS, AVATAR_IMAGES } from '../../domain/defaults';
@@ -39,6 +40,7 @@ export default function BalanceReview() {
   const symbol = editionConfig?.currency.symbol ?? '$';
 
   const handleLaunch = () => {
+    playSound('launchgame');
     initGame({
       edition,
       playerNames,
@@ -139,7 +141,7 @@ export default function BalanceReview() {
               if (key === 'startingBonus' || key === 'customRules') return null;
               if (!value) return null;
               const labels: Record<string, string> = {
-                noBankruptcy: '✅ No Bankruptcy',
+                allowNegative100: '✅ Allow -$100 Overdraft',
                 infiniteBankMoney: '✅ Infinite Bank Money',
               };
               return (

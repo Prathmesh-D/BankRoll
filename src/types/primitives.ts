@@ -37,5 +37,5 @@ export type TransactionType =
 // ─── House Rules ──────────────────────────────────────────────────────────────
 export type HouseRuleKey =
   | 'startingBonus'
-  | 'noBankruptcy'
+  | 'allowNegative100'
   | 'infiniteBankMoney';

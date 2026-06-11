@@ -11,6 +11,7 @@ import {
   Image,
   Platform,
   Alert,
+  BackHandler,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -38,6 +39,7 @@ import HouseRulesPanel from '../components/HouseRulesPanel';
 import type { Entity } from '../types/entity';
 import { formatBalance } from '../domain/currencyFormatter';
 import type { NewTransaction } from '../types/transaction';
+import { playSound } from '../utils/SoundManager';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
@@ -107,6 +109,7 @@ export default function Dashboard() {
   const [showTransactionLog, setShowTransactionLog] = useState(false);
   const [showHouseRules, setShowHouseRules] = useState(false);
   const [showEndGameModal, setShowEndGameModal] = useState(false);
+  const [showLeaveGameDialog, setShowLeaveGameDialog] = useState(false);
 
   const viewRefs = useRef<Record<string, View | null>>({});
   const dropZones = useRef<Record<string, {x: number, y: number, w: number, h: number}>>({});
@@ -115,6 +118,15 @@ export default function Dashboard() {
   const cursorX = useSharedValue(-1000);
   const cursorY = useSharedValue(-1000);
   const isDragging = useSharedValue(false);
+
+  React.useEffect(() => {
+    const onBackPress = () => {
+      setShowLeaveGameDialog(true);
+      return true;
+    };
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [navigation]);
 
   if (!session) {
     return (
@@ -131,7 +143,7 @@ export default function Dashboard() {
   const players = entities.filter(e => e.type === 'player');
   const bank = entities.find(e => e.type === 'bank')!;
   const activeRulesCount = [
-    houseRules.noBankruptcy,
+    houseRules.allowNegative100,
     houseRules.infiniteBankMoney,
   ].filter(Boolean).length + houseRules.customRules.filter(r => r.isActive).length;
 
@@ -153,6 +165,7 @@ export default function Dashboard() {
   }, [entities]);
 
   const handleDragStart = useCallback((entity: Entity) => {
+    playSound('whoosh');
     measureTargets();
     setPayFrom(entity);
     setHoveredTargetId(null);
@@ -239,8 +252,9 @@ export default function Dashboard() {
   const handlePay = useCallback((amount: number, label?: string, propertyId?: string) => {
     if (!payFrom || !payTo) return;
     
-    if (payFrom.type !== 'bank' && payFrom.balance - amount < -100) {
-      setFundsRequiredMessage('You cannot go below -100. Please mortgage properties to raise funds first.');
+    const minLimit = houseRules.allowNegative100 ? -100 : 0;
+    if (payFrom.type !== 'bank' && payFrom.balance - amount < minLimit) {
+      setFundsRequiredMessage(`You cannot go below ${minLimit}. Please mortgage properties to raise funds first.`);
       setPayFrom(null);
       setPayTo(null);
       return;
@@ -456,6 +470,7 @@ export default function Dashboard() {
                   containerStyle={{ flex: 1 }}
                   style={styles.dialogBtnConfirm}
                   onPress={() => {
+                    playSound('wompwomp');
                     updateEntity(bankruptDialog.id, { isActive: false, mortgagedProperties: [] });
                     setBankruptDialog(null);
                     setMortgageTarget(null);
@@ -497,10 +512,13 @@ export default function Dashboard() {
                     
                     if (mortgageDialog.isMortgaged) {
                       const totalCost = mortgageDialog.properties.reduce((acc, p) => acc + p.unmortgageCost, 0);
-                      if (mortgageTarget.balance - totalCost < -100) {
-                        setFundsRequiredMessage('You cannot go below -100. Please mortgage other properties to raise funds first.');
-                        setMortgageDialog(null);
-                        return;
+                      const minLimit = houseRules.allowNegative100 ? -100 : 0;
+                      if (mortgageTarget.type !== 'bank') {
+                        if (mortgageTarget.balance - totalCost < minLimit) {
+                          setFundsRequiredMessage(`You cannot go below ${minLimit}. Please mortgage other properties to raise funds first.`);
+                          setMortgageDialog(null);
+                          return;
+                        }
                       }
                     }
 
@@ -607,6 +625,34 @@ export default function Dashboard() {
                 }}
               >
                 <Text style={styles.dialogBtnConfirmText}>END GAME</Text>
+              </AnimatedPressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showLeaveGameDialog} transparent animationType="fade" onRequestClose={() => setShowLeaveGameDialog(false)}>
+        <View style={styles.dialogBackdrop}>
+          <View style={styles.dialogCard}>
+            <Text style={styles.dialogTitle}>LEAVE GAME?</Text>
+            <Text style={styles.dialogMessage}>Do you want to return to the home menu? Your session will be saved automatically.</Text>
+            <View style={styles.dialogButtons}>
+              <AnimatedPressable
+                containerStyle={{ flex: 1 }}
+                style={styles.dialogBtnCancel}
+                onPress={() => setShowLeaveGameDialog(false)}
+              >
+                <Text style={styles.dialogBtnCancelText}>STAY</Text>
+              </AnimatedPressable>
+              <AnimatedPressable
+                containerStyle={{ flex: 1 }}
+                style={styles.dialogBtnConfirm}
+                onPress={() => {
+                  setShowLeaveGameDialog(false);
+                  navigation.navigate('Home');
+                }}
+              >
+                <Text style={styles.dialogBtnConfirmText}>LEAVE</Text>
               </AnimatedPressable>
             </View>
           </View>

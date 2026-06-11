@@ -13,6 +13,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { SetupStackParamList } from '../../navigation/SetupNavigator';
+import { playSound } from '../../utils/SoundManager';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../theme/tokens';
 import { PLAYER_COLOURS, DEFAULT_AVATARS, AVATAR_IMAGES } from '../../domain/defaults';
 import { AnimatedPressable } from '../../components/AnimatedPressable';
@@ -89,7 +90,8 @@ export default function PlayerSetup() {
           <View style={styles.counter}>
             <TouchableOpacity
               style={styles.counterBtn}
-              onPress={() => setPlayerCount(Math.max(MIN_PLAYERS, playerCount - 1))}
+              activeOpacity={0.7}
+              onPress={() => { playSound('touch'); setPlayerCount(Math.max(MIN_PLAYERS, playerCount - 1)); }}
               disabled={playerCount <= MIN_PLAYERS}
             >
               <Text style={styles.counterBtnText}>-</Text>
@@ -97,7 +99,8 @@ export default function PlayerSetup() {
             <Text style={styles.counterValue}>{playerCount}</Text>
             <TouchableOpacity
               style={styles.counterBtn}
-              onPress={() => setPlayerCount(Math.min(MAX_PLAYERS, playerCount + 1))}
+              activeOpacity={0.7}
+              onPress={() => { playSound('touch'); setPlayerCount(Math.min(MAX_PLAYERS, playerCount + 1)); }}
               disabled={playerCount >= MAX_PLAYERS}
             >
               <Text style={styles.counterBtnText}>+</Text>
@@ -112,7 +115,7 @@ export default function PlayerSetup() {
               {/* Avatar selector */}
               <TouchableOpacity
                 style={[styles.avatarCircle, { backgroundColor: Colors.cream, borderColor: PLAYER_COLOURS[i] }]}
-                onPress={() => cycleAvatar(i)}
+                onPress={() => { playSound('touch'); cycleAvatar(i); }}
               >
                 {DEFAULT_AVATARS.map((avatarId) => (
                   <Image 
@@ -154,11 +157,14 @@ export default function PlayerSetup() {
         <FloatingView amplitude={4} duration={1800}>
           <AnimatedPressable
             style={styles.nextButton}
-            onPress={() => navigation.navigate('HouseRulesSetup', {
-              edition,
-              playerNames,
-              playerAvatars,
-            })}
+            onPress={() => {
+              playSound('touch');
+              navigation.navigate('HouseRulesSetup', {
+                edition,
+                playerNames,
+                playerAvatars,
+              });
+            }}
           >
             <Text style={styles.nextButtonText}>Continue</Text>
           </AnimatedPressable>

@@ -9,6 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Colors, Typography, Spacing, Shadows, Radius } from '../theme/tokens';
+import { playSound } from '../utils/SoundManager';
 import type { Entity } from '../types/entity';
 import type { EditionConfig } from '../types/edition';
 import PropertyPicker from './PropertyPicker';
@@ -60,6 +61,15 @@ export default function QuickPaySheet({
     const sign = amount < 0 ? '-' : '';
     return `${sign}${symbol}${Math.abs(amount)}`;
   };
+
+  const handleKeyPress = useCallback((key: string) => {
+    playSound('touch');
+    if (key === 'DEL') {
+      setAmountInput(prev => prev.slice(0, -1));
+    } else {
+      setAmountInput(prev => prev + key);
+    }
+  }, []);
 
   const handlePropertySelect = useCallback((property: Property) => {
     setSelectedProperty(property);
@@ -216,7 +226,7 @@ export default function QuickPaySheet({
                     <TouchableOpacity
                       key={d}
                       style={styles.chipBtn}
-                      onPress={() => setAmountInput(prev => (parseInt(prev || '0') + d).toString())}
+                      onPress={() => { playSound('touch'); setAmountInput(prev => (parseInt(prev || '0') + d).toString()); }}
                     >
                       <Text style={styles.chipText}>+{d}</Text>
                     </TouchableOpacity>
@@ -229,26 +239,26 @@ export default function QuickPaySheet({
                     <TouchableOpacity
                       key={num}
                       style={styles.keyBtn}
-                      onPress={() => setAmountInput(prev => prev + num)}
+                      onPress={() => { playSound('touch'); setAmountInput(prev => prev + num); }}
                     >
                       <Text style={styles.keyText}>{num}</Text>
                     </TouchableOpacity>
                   ))}
                   <TouchableOpacity
                     style={[styles.keyBtn, styles.keyBtnDel]}
-                    onPress={() => setAmountInput(prev => prev.slice(0, -1))}
+                    onPress={() => { playSound('touch'); setAmountInput(prev => prev.slice(0, -1)); }}
                   >
                     <Text style={[styles.keyText, { color: Colors.errorRed }]}>DEL</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.keyBtn}
-                    onPress={() => setAmountInput(prev => prev + '0')}
+                    onPress={() => { playSound('touch'); setAmountInput(prev => prev + '0'); }}
                   >
                     <Text style={styles.keyText}>0</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.keyBtn, styles.keyBtn00]}
-                    onPress={() => setAmountInput(prev => prev ? prev + '00' : '0')}
+                    onPress={() => { playSound('touch'); setAmountInput(prev => prev ? prev + '00' : '0'); }}
                   >
                     <Text style={styles.keyText}>00</Text>
                   </TouchableOpacity>

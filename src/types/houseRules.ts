@@ -3,7 +3,7 @@ import type { HouseRuleKey } from './primitives';
 
 export interface HouseRules {
   startingBonus: number;         // Default: edition salary
-  noBankruptcy: boolean;         // Default: false
+  allowNegative100: boolean;         // Default: false
   infiniteBankMoney: boolean;      // Default: false
   customRules: CustomRule[];     // Max 10
 }
