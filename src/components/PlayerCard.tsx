@@ -60,6 +60,7 @@ export default function PlayerCard({
   const [btnPressed, setBtnPressed] = useState(false);
 
   const panGesture = Gesture.Pan()
+    .enabled(entity.isActive)
     .onBegin((event) => {
       scale.value = withSpring(1.03, Springs.snappy);
       if (isDragging && cursorX && cursorY) {

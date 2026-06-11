@@ -15,7 +15,7 @@
 
 <div align="center">
     <a href="https://github.com/Prathmesh-D/BankRoll/releases/latest">
-        <img src="https://img.shields.io/badge/version-v1.0.1-1f201f?style=for-the-badge&labelColor=f9f8ee"/>
+        <img src="https://img.shields.io/badge/version-v1.0.2-1f201f?style=for-the-badge&labelColor=f9f8ee"/>
     </a>
 </div>
 <br>
@@ -135,7 +135,7 @@ Customizable house rules including No Bankruptcy (-100 limit) and Infinite Bank 
     </td>
     <td valign="top" style="padding-left: 12px;">
       <strong>Download the App</strong><br><br>
-      Navigate to the <a href="https://github.com/Prathmesh-D/BankRoll/releases/latest">Releases</a> section on GitHub and download <code>BankRoll-v1.0.1.apk</code>.<br>
+      Navigate to the <a href="https://github.com/Prathmesh-D/BankRoll/releases/latest">Releases</a> section on GitHub and download <code>BankRoll-v1.0.2.apk</code>.<br>
       Install the APK on your Android device (ensure "Install from Unknown Sources" is enabled).<br><br>
     </td>
   </tr>

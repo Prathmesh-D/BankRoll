@@ -137,6 +137,11 @@ export default function Dashboard() {
 
   const measureTargets = useCallback(() => {
     Object.keys(viewRefs.current).forEach(id => {
+      const targetEntity = entities.find(e => e.id === id);
+      if (targetEntity && !targetEntity.isActive) {
+        delete dropZones.current[id];
+        return;
+      }
       const view = viewRefs.current[id];
       if (view) {
         view.measure((x, y, w, h, px, py) => {
@@ -145,7 +150,7 @@ export default function Dashboard() {
         });
       }
     });
-  }, []);
+  }, [entities]);
 
   const handleDragStart = useCallback((entity: Entity) => {
     measureTargets();
