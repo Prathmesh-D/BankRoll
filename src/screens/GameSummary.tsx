@@ -7,6 +7,9 @@ import {
   SafeAreaView,
   ScrollView,
   Image,
+  Clipboard,
+  ToastAndroid,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useGameStore } from '../store/useGameStore';
@@ -41,6 +44,13 @@ export default function GameSummary() {
   const handleClose = () => {
     endGame();
     navigation.navigate('Home');
+  };
+
+  const handleCopyCode = () => {
+    Clipboard.setString(session.sessionCode);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Session code copied!', ToastAndroid.SHORT);
+    }
   };
 
   return (
@@ -115,11 +125,15 @@ export default function GameSummary() {
         </View>
 
         {/* Session Code */}
-        <View style={styles.codeCard}>
+        <TouchableOpacity 
+          style={styles.codeCard} 
+          activeOpacity={0.8} 
+          onPress={handleCopyCode}
+        >
           <Text style={styles.codeLabel}>Session Code</Text>
           <Text style={styles.codeValue}>{session.sessionCode}</Text>
           <Text style={styles.codeNote}>Use this to restore the game later.</Text>
-        </View>
+        </TouchableOpacity>
       </ScrollView>
 
       <View style={styles.footer}>

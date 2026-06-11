@@ -62,7 +62,6 @@ export default function SessionCodeBadge({ code }: Props) {
       accessibilityHint="Long press to share"
     >
       <Animated.View style={[styles.badge, animatedStyle]}>
-        <Text style={styles.icon}>📋</Text>
         <Text style={styles.code}>{code}</Text>
       </Animated.View>
     </TouchableOpacity>
@@ -73,6 +72,7 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
     borderRadius: 4,
