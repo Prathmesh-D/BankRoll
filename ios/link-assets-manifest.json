@@ -1,0 +1,37 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/AlfaSlabOne-Regular.ttf",
+      "sha1": "08fb3e651edfb208de6bc80ad76d52f3f3355f32"
+    },
+    {
+      "path": "assets/fonts/BebasNeue-Regular.ttf",
+      "sha1": "76057d206a498d40aa4779d0d5a382ad7554dd80"
+    },
+    {
+      "path": "assets/fonts/Lora-Bold.ttf",
+      "sha1": "78fb38f212fa49029aff24c669a39648d9b4e68b"
+    },
+    {
+      "path": "assets/fonts/Lora-BoldItalic.ttf",
+      "sha1": "78fb38f212fa49029aff24c669a39648d9b4e68b"
+    },
+    {
+      "path": "assets/fonts/Lora-Italic.ttf",
+      "sha1": "78fb38f212fa49029aff24c669a39648d9b4e68b"
+    },
+    {
+      "path": "assets/fonts/Lora-Regular.ttf",
+      "sha1": "78fb38f212fa49029aff24c669a39648d9b4e68b"
+    },
+    {
+      "path": "assets/fonts/PaytoneOne-Regular.ttf",
+      "sha1": "a3e7ba4251c21532d9f7c0fb23645660e1c6a267"
+    },
+    {
+      "path": "assets/fonts/Righteous-Regular.ttf",
+      "sha1": "6d82a28d1dbf0441a8d9ee7e26fc553fd618caf7"
+    }
+  ]
+}
