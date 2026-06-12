@@ -2,7 +2,7 @@ import type { PropertyId } from './primitives';
 
 export interface CurrencyConfig {
   symbol: string;          // "$" | "£" | "₹"
-  code: 'USD' | 'GBP' | 'INR';
+  code: string;
   locale: string;          // "en-US" | "en-GB" | "en-IN"
   notation: 'standard' | 'indian';
 }

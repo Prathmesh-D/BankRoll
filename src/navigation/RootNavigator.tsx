@@ -18,7 +18,7 @@ export type RootStackParamList = {
   SetupWizard: undefined;
   Dashboard: undefined;
   SessionHistory: undefined;
-  GameSummary: undefined;
+  GameSummary: { isEnding?: boolean };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

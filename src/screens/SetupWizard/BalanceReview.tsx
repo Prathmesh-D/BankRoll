@@ -14,17 +14,15 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { SetupStackParamList } from '../../navigation/SetupNavigator';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../theme/tokens';
+import { Colors, Typography, Shadows } from '../../theme/tokens';
 import { playSound } from '../../utils/SoundManager';
 import { AnimatedPressable } from '../../components/AnimatedPressable';
 import { FloatingView } from '../../components/FloatingView';
 import { PLAYER_COLOURS, DEFAULT_AVATARS, AVATAR_IMAGES } from '../../domain/defaults';
 import { getEditionConfig } from '../../data/editions';
-import { formatBalance } from '../../domain/currencyFormatter';
 import { useGameStore } from '../../store/useGameStore';
 
 type Route = RouteProp<SetupStackParamList, 'BalanceReview'>;
-type RootNav = NativeStackNavigationProp<RootStackParamList, 'SetupWizard'>;
 
 export default function BalanceReview() {
   const navigation = useNavigation<any>();
@@ -56,16 +54,14 @@ export default function BalanceReview() {
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.cream} />
 
-      {/* Top Bar */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 48 }}>
+      <View style={styles.topBar}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()} 
-          style={{ paddingHorizontal: 12, paddingVertical: 8, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, ...Shadows.btn }}
+          style={styles.backBtn}
         >
-          <Text style={{ fontFamily: Typography.display, fontSize: 14, color: Colors.ink, letterSpacing: 1 }}>BACK</Text>
+          <Text style={styles.backBtnText}>BACK</Text>
         </TouchableOpacity>
 
-        {/* Progress */}
         <View style={styles.progress}>
           {[0, 1, 2, 3].map(i => (
             <View key={i} style={[
@@ -75,7 +71,7 @@ export default function BalanceReview() {
             ]} />
           ))}
         </View>
-        <View style={{ width: 60 }} />
+        <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -83,7 +79,6 @@ export default function BalanceReview() {
         <Text style={styles.title}>Ready to Play!</Text>
         <Text style={styles.subtitle}>Review and launch your game.</Text>
 
-        {/* Edition Summary */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Edition</Text>
           <Text style={styles.cardValue}>
@@ -91,7 +86,6 @@ export default function BalanceReview() {
           </Text>
         </View>
 
-        {/* Starting Balance */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Starting Balance</Text>
           <Text style={styles.cardValue}>
@@ -100,13 +94,11 @@ export default function BalanceReview() {
           <Text style={styles.cardSub}>Per player</Text>
         </View>
 
-        {/* Salary */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>GO Salary</Text>
           <Text style={styles.cardValue}>{symbol}{salary.toLocaleString()}</Text>
         </View>
 
-        {/* Players Preview */}
         <View style={styles.playersCard}>
           <Text style={styles.cardTitle}>Players ({playerNames.length})</Text>
           <View style={styles.playersList}>
@@ -116,7 +108,7 @@ export default function BalanceReview() {
                   {AVATAR_IMAGES[playerAvatars[i] ?? DEFAULT_AVATARS[i]] ? (
                     <Image 
                       source={AVATAR_IMAGES[playerAvatars[i] ?? DEFAULT_AVATARS[i]]} 
-                      style={{ width: '80%', height: '80%' }} 
+                      style={styles.avatarImage} 
                       resizeMode="contain" 
                     />
                   ) : (
@@ -133,7 +125,6 @@ export default function BalanceReview() {
           </View>
         </View>
 
-        {/* Active house rules */}
         {houseRules && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Active Rules</Text>
@@ -152,7 +143,6 @@ export default function BalanceReview() {
         )}
       </ScrollView>
 
-      {/* Launch Button */}
       <View style={styles.footer}>
         <FloatingView amplitude={4} duration={1800}>
           <AnimatedPressable style={styles.launchButton} onPress={handleLaunch}>
@@ -166,27 +156,10 @@ export default function BalanceReview() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    paddingHorizontal: 16, 
-    paddingTop: 16 
-  },
-  backButton: { 
-    paddingHorizontal: 12, 
-    paddingVertical: 8, 
-    borderWidth: 2, 
-    borderColor: Colors.ink, 
-    backgroundColor: Colors.white, 
-    ...Shadows.btn 
-  },
-  backButtonText: { 
-    fontFamily: Typography.display, 
-    fontSize: 14, 
-    color: Colors.ink, 
-    letterSpacing: 1 
-  },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 48 },
+  backBtn: { paddingHorizontal: 12, paddingVertical: 8, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, ...Shadows.btn },
+  backBtnText: { fontFamily: Typography.display, fontSize: 14, color: Colors.ink, letterSpacing: 1 },
+  topBarSpacer: { width: 60 },
   progress: {
     flexDirection: 'row', gap: 6, alignItems: 'center',
   },
@@ -257,5 +230,9 @@ const styles = StyleSheet.create({
   },
   launchButtonText: {
     fontSize: 24, fontFamily: Typography.display, color: Colors.white, letterSpacing: 2,
+  },
+  avatarImage: {
+    width: 32,
+    height: 32,
   },
 });

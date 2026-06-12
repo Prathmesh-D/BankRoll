@@ -78,7 +78,7 @@ export default function PropertyPicker({ editionConfig, mortgagedByEntity, allEn
             </Text>
           </View>
           {isLockedByOther ? (
-            <Text style={styles.lockedByText}>🔒 Mortgaged by {mortgagedByOther.name}</Text>
+            <Text style={styles.lockedByText}>🔒 Mortgaged by {mortgagedByOther?.name}</Text>
           ) : (
             <>
               {!item.isStation && !item.isUtility && (
@@ -124,6 +124,8 @@ export default function PropertyPicker({ editionConfig, mortgagedByEntity, allEn
     </View>
   ), []);
 
+  const renderSeparator = useCallback(() => <View style={styles.separator} />, []);
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -162,7 +164,7 @@ export default function PropertyPicker({ editionConfig, mortgagedByEntity, allEn
         renderSectionHeader={renderSectionHeader}
         contentContainerStyle={styles.listContent}
         stickySectionHeadersEnabled={false}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={renderSeparator}
       />
     </View>
   );
@@ -265,8 +267,7 @@ const styles = StyleSheet.create({
   },
   propertyRowSelected: {
     backgroundColor: '#E6F4EA', // Light green
-    borderWidth: 2,
-    borderColor: Colors.moneyGreen,
+    borderColor: Colors.green,
   },
   propertyRowLocked: {
     backgroundColor: Colors.creamDark,
@@ -333,5 +334,28 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.creamDark,
     marginLeft: Spacing.md + 12 + Spacing.sm,
+  },
+  colorSwatchLocked: {
+    opacity: 0.3,
+  },
+  rightActions: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    minWidth: 40,
+  },
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.green,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.ink,
+  },
+  checkIcon: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

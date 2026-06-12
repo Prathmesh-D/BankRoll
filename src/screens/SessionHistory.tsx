@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { useGameStore } from '../store/useGameStore';
-import { Colors, Typography, Spacing, Radius } from '../theme/tokens';
+import { Colors, Typography, Spacing, Shadows } from '../theme/tokens';
 import type { SessionSummary } from '../types/session';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'SessionHistory'>;
@@ -88,6 +88,7 @@ export default function SessionHistory() {
       </TouchableOpacity>
     );
   }, [handleRestore, handleDelete]);
+  const itemSeparator = React.useCallback(() => <View style={styles.separator} />, []);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -110,7 +111,7 @@ export default function SessionHistory() {
           keyExtractor={item => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
-          ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
+          ItemSeparatorComponent={itemSeparator}
         />
       )}
     </SafeAreaView>
@@ -129,9 +130,12 @@ const styles = StyleSheet.create({
   closeText: { fontSize: Typography.size.body, fontFamily: Typography.bodySemibold, color: Colors.maroon },
   list: { padding: Spacing.md },
   card: {
-    backgroundColor: Colors.cream, borderRadius: Radius.lg, padding: Spacing.md, gap: Spacing.xs,
-    shadowColor: Colors.maroon, shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
+    backgroundColor: Colors.cream,
+    borderWidth: 4,
+    borderColor: Colors.ink,
+    padding: Spacing.md,
+    gap: Spacing.xs,
+    ...Shadows.card,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
   flag: { fontSize: 24 },
@@ -144,6 +148,7 @@ const styles = StyleSheet.create({
   cardStats: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   stat: { fontSize: Typography.size.caption, fontFamily: Typography.body, color: Colors.ghost },
   statSep: { fontSize: Typography.size.caption, color: Colors.ghost },
+  separator: { height: Spacing.sm },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm },
   emptyIcon: { fontSize: 48 },
   emptyTitle: { fontSize: Typography.size.h1, fontFamily: Typography.display, color: Colors.maroon },

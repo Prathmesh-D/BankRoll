@@ -4,9 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   Modal,
-  Pressable,
+  FlatList,
 } from 'react-native';
 import { Colors, Typography, Spacing, Shadows, Radius } from '../theme/tokens';
 import { playSound } from '../utils/SoundManager';
@@ -53,7 +52,7 @@ export default function QuickPaySheet({
 
   const total = activeTab === 'rent' && selectedProperty && selectedRentAmount !== null
     ? selectedRentAmount
-    : parseInt(amountInput) || 0;
+    : parseInt(amountInput, 10) || 0;
 
   const symbol = editionConfig.currency.symbol;
 
@@ -212,8 +211,13 @@ export default function QuickPaySheet({
           </View>
 
           {/* Content */}
-          <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-            {activeTab === 'amount' ? (
+          <FlatList
+            style={styles.content}
+            contentContainerStyle={{ paddingBottom: 120 }}
+            showsVerticalScrollIndicator={false}
+            data={[{ key: 'content' }]}
+            renderItem={() => (
+              activeTab === 'amount' ? (
               <View style={styles.transferPanel}>
                 <View style={styles.inputWrapper}>
                   <Text style={styles.inputSymbol}>{symbol}</Text>
@@ -226,7 +230,7 @@ export default function QuickPaySheet({
                     <TouchableOpacity
                       key={d}
                       style={styles.chipBtn}
-                      onPress={() => { playSound('touch'); setAmountInput(prev => (parseInt(prev || '0') + d).toString()); }}
+                      onPress={() => { playSound('touch'); setAmountInput(prev => (parseInt(prev || '0', 10) + d).toString()); }}
                     >
                       <Text style={styles.chipText}>+{d}</Text>
                     </TouchableOpacity>
@@ -298,8 +302,9 @@ export default function QuickPaySheet({
                   </View>
                 )}
               </View>
-            )}
-          </ScrollView>
+            )
+          )}
+          />
 
           {/* Footer Actions */}
           <View style={styles.footerActions}>
@@ -342,21 +347,23 @@ const styles = StyleSheet.create({
   sheet: {
     backgroundColor: Colors.cream,
     borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
     borderColor: Colors.ink,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
     maxHeight: '95%',
-    shadowColor: 'rgba(0,0,0,0.3)',
-    shadowOffset: { width: 0, height: -12 },
+    shadowColor: Colors.ink,
+    shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 1,
-    shadowRadius: 40,
+    shadowRadius: 0,
     elevation: 20,
   },
   handle: {
     width: 48,
-    height: 6,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    borderRadius: 3,
+    height: 4,
+    backgroundColor: Colors.ink,
+    borderRadius: 0,
     alignSelf: 'center',
     marginTop: 16,
     marginBottom: 16,
@@ -394,17 +401,24 @@ const styles = StyleSheet.create({
     fontFamily: Typography.display,
   },
   closeBtn: {
-    width: 40,
-    height: 40,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    backgroundColor: Colors.white,
+    borderRadius: 0,
+    borderWidth: 2,
+    borderColor: Colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: Colors.ink,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   closeBtnText: {
     fontSize: 16,
-    color: 'rgba(0,0,0,0.5)',
-    fontFamily: Typography.bodySemibold,
+    color: Colors.ink,
+    fontFamily: Typography.display,
   },
   tabs: {
     flexDirection: 'row',

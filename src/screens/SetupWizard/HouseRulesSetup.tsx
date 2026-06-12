@@ -12,8 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { SetupStackParamList } from '../../navigation/SetupNavigator';
 import { playSound } from '../../utils/SoundManager';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../theme/tokens';
-import { formatBalance } from '../../domain/currencyFormatter';
+import { Colors, Typography, Shadows } from '../../theme/tokens';
 import { getEditionConfig } from '../../data/editions';
 import { AnimatedPressable } from '../../components/AnimatedPressable';
 import { FloatingView } from '../../components/FloatingView';
@@ -66,12 +65,12 @@ export default function HouseRulesSetup() {
   return (
     <SafeAreaView style={styles.safe}>
       {/* Top Bar */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 48 }}>
+      <View style={styles.topBar}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()} 
-          style={{ paddingHorizontal: 12, paddingVertical: 8, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, ...Shadows.btn }}
+          style={styles.backBtn}
         >
-          <Text style={{ fontFamily: Typography.display, fontSize: 14, color: Colors.ink, letterSpacing: 1 }}>BACK</Text>
+          <Text style={styles.backBtnText}>BACK</Text>
         </TouchableOpacity>
 
         {/* Progress */}
@@ -81,7 +80,7 @@ export default function HouseRulesSetup() {
           <View style={[styles.progressDot, styles.progressDotActive]} />
           <View style={styles.progressDot} />
         </View>
-        <View style={{ width: 60 }} />
+        <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -259,6 +258,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.ink,
     ...Shadows.btn,
   },
+  balanceControlInner: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   salaryBtnSelected: {
     backgroundColor: Colors.ink,
   },
@@ -313,4 +317,8 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 24, fontFamily: Typography.display, color: Colors.ink, letterSpacing: 2,
   },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 48 },
+  backBtn: { paddingHorizontal: 12, paddingVertical: 8, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, ...Shadows.btn },
+  backBtnText: { fontFamily: Typography.display, fontSize: 14, color: Colors.ink, letterSpacing: 1 },
+  topBarSpacer: { width: 60 },
 });

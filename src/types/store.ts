@@ -36,7 +36,7 @@ export interface GameStore {
   bankruptEntity: (id: EntityId) => void;
 
   // ─── Transaction Actions ──────────────────────────────────────────────────
-  executeTransaction: (tx: NewTransaction) => TransactionId;
+  executeTransaction: (tx: NewTransaction, options?: { skipDebounce?: boolean }) => TransactionId;
   undoTransaction: (txId: TransactionId) => void;
   clearUndoEntry: (txId: TransactionId) => void;
 

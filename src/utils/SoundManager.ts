@@ -60,14 +60,24 @@ export const playSound = (effect: SoundEffect) => {
     sound.setVolume(1.0);
 
     // For longer/ambient sounds, avoid interrupting to prevent popping noise
-    if (sound.isPlaying() && effect !== 'touch') {
-      return; 
+    const nonInterruptible: SoundEffect[] = ['wompwomp', 'finish', 'launchgame', 'GameStart'];
+    
+    if (sound.isPlaying()) {
+      if (nonInterruptible.includes(effect)) {
+        return; 
+      }
+      // For short repeatable sounds (transaction, touch, whoosh), 
+      // just rewinding seamlessly allows spamming without dropping playback
+      sound.setCurrentTime(0);
+      return;
     }
 
-    if (sound.isPlaying()) {
-      sound.stop();
-    }
-    sound.setCurrentTime(0);
-    sound.play();
+    sound.play((success) => {
+      if (!success) {
+        // Playback failed (e.g., interrupted by a phone call).
+        // Reset the sound so future plays work correctly.
+        sound.reset();
+      }
+    });
   }
 };

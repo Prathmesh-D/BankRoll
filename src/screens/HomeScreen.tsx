@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   FlatList,
   SafeAreaView,
@@ -11,14 +10,14 @@ import {
   TextInput,
   Image,
   Platform,
-  Alert,
   Modal,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { useGameStore } from '../store/useGameStore';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../theme/tokens';
+import { Colors, Typography, Radius, Shadows } from '../theme/tokens';
 import { AnimatedPressable } from '../components/AnimatedPressable';
 import { FloatingView } from '../components/FloatingView';
 import type { SessionSummary } from '../types/session';
@@ -27,9 +26,25 @@ import { playSound } from '../utils/SoundManager';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
+const EDITION_FLAGS: Record<string, string> = {
+  standard_us: '🇺🇸',
+  standard_uk: '🇬🇧',
+  standard_in: '🇮🇳',
+  custom: '⚙️',
+};
+
+const getEditionName = (editionId: string) => {
+  switch (editionId) {
+    case 'standard_us': return 'Standard US Edition';
+    case 'standard_uk': return 'Standard UK Edition';
+    case 'standard_in': return 'India Edition';
+    default: return 'Custom Edition';
+  }
+};
+
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
-  const { session, sessionHistory, restoreSession, deleteSession } = useGameStore();
+  const { sessionHistory, restoreSession, deleteSession } = useGameStore();
 
   const [codeInput, setCodeInput] = useState('');
   const [restoreError, setRestoreError] = useState('');
@@ -56,10 +71,6 @@ export default function HomeScreen() {
     }, 600);
   }, [navigation]);
 
-  const handleResumeGame = useCallback(() => {
-    navigation.navigate('Dashboard');
-  }, [navigation]);
-
   const handleRestoreCode = useCallback(() => {
     if (codeInput.length < 6) {
       setRestoreError('Enter a 6-character code');
@@ -72,7 +83,7 @@ export default function HomeScreen() {
       if (result === 'ok') {
         setRestoreError('');
         const status = useGameStore.getState().session?.status;
-        if (status === 'ended') navigation.navigate('GameSummary');
+        if (status === 'ended') navigation.navigate('GameSummary', {});
         else navigation.navigate('Dashboard');
       } else {
         setRestoreError('No game found.');
@@ -88,7 +99,7 @@ export default function HomeScreen() {
       if (result === 'ok') {
         const restoredStatus = useGameStore.getState().session?.status;
         if (restoredStatus === 'ended') {
-          navigation.navigate('GameSummary');
+          navigation.navigate('GameSummary', {});
         } else {
           navigation.navigate('Dashboard');
         }
@@ -101,33 +112,15 @@ export default function HomeScreen() {
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   };
 
-  const EDITION_FLAGS: Record<string, string> = {
-    standard_us: '🇺🇸',
-    standard_uk: '🇬🇧',
-    standard_in: '🇮🇳',
-    custom: '⚙️',
-  };
-
-  const getEditionName = (editionId: string) => {
-    switch (editionId) {
-      case 'standard_us': return 'Standard US Edition';
-      case 'standard_uk': return 'Standard UK Edition';
-      case 'standard_in': return 'India Edition';
-      default: return 'Custom Edition';
-    }
-  };
-
   const renderSession = useCallback(({ item, index }: { item: SessionSummary, index: number }) => {
-    // Treat any missing status or 'active' explicitly as active.
     const isEnded = item.status === 'ended';
-    const isArchived = item.status === 'archived';
     
     return (
       <AnimatedPressable
         style={[
           styles.sessionCard, 
           index > 0 && styles.sessionCardArchived,
-          isEnded && { borderStyle: 'dotted' }
+          isEnded && styles.sessionCardEnded
         ]}
         onPress={() => handleSessionRestore(item)}
       >
@@ -165,107 +158,116 @@ export default function HomeScreen() {
         </View>
       </AnimatedPressable>
     );
-  }, [handleSessionRestore, setSessionToDelete]);
+  }, [handleSessionRestore]);
+
+  const listHeader = useCallback(() => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>ACTIVE SESSIONS</Text>
+      <Text style={styles.sectionMeta}>RESUME PLAY</Text>
+    </View>
+  ), []);
+
+  const listEmpty = useCallback(() => (
+    <View style={styles.emptySessionContainer}>
+      <Text style={styles.emptySessionText}>No active sessions found. Start a new game below!</Text>
+    </View>
+  ), []);
+
+  const itemSeparator = useCallback(() => <View style={styles.separator} />, []);
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.cream} />
-      
-      {/* Header */}
-      <Animated.View style={[styles.header, { opacity: titleOpacity, transform: [{ translateY: titleY }] }]}>
-        <Image source={require('../../assets/images/logo.png')} style={styles.logoImage} resizeMode="contain" />
-        <Text style={styles.subtitle}>Property Trading Ledger</Text>
-      </Animated.View>
+      <KeyboardAvoidingView 
+        style={styles.flex1} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <StatusBar barStyle="dark-content" backgroundColor={Colors.cream} />
+        
+        <Animated.View style={[styles.header, { opacity: titleOpacity, transform: [{ translateY: titleY }] }]}>
+          <Image source={require('../../assets/images/logo.png')} style={styles.logoImage} resizeMode="contain" />
+          <Text style={styles.subtitle}>Property Trading Ledger</Text>
+        </Animated.View>
 
-      <View style={styles.container}>
-        <FlatList
-          data={sessionHistory.slice(0, 5)}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={() => (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>ACTIVE SESSIONS</Text>
-              <Text style={styles.sectionMeta}>RESUME PLAY</Text>
+        <View style={styles.container}>
+          <FlatList
+            data={sessionHistory.slice(0, 5)}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={listHeader}
+            ListEmptyComponent={listEmpty}
+            renderItem={renderSession}
+            ItemSeparatorComponent={itemSeparator}
+            contentContainerStyle={styles.listContent}
+          />
+
+          <View style={styles.bottomSection}>
+            <View style={styles.joinContainer}>
+              <Text style={styles.joinLabel}>RESTORE SESSION</Text>
+              <View style={styles.joinInputRow}>
+                <TextInput
+                  style={styles.joinInput}
+                  placeholder="ENTER CODE"
+                  placeholderTextColor="rgba(0,0,0,0.2)"
+                  value={codeInput}
+                  onChangeText={setCodeInput}
+                  maxLength={6}
+                  autoCapitalize="characters"
+                />
+                <AnimatedPressable style={styles.joinBtn} onPress={handleRestoreCode}>
+                  <Text style={styles.joinBtnText}>→</Text>
+                </AnimatedPressable>
+              </View>
+              {restoreError ? <Text style={styles.errorText}>{restoreError}</Text> : null}
             </View>
-          )}
-          ListEmptyComponent={() => (
-            <View style={styles.emptySessionContainer}>
-              <Text style={styles.emptySessionText}>No active sessions found. Start a new game below!</Text>
-            </View>
-          )}
-          renderItem={renderSession}
-          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-          contentContainerStyle={{ paddingBottom: 16 }}
-        />
 
-        <View style={styles.bottomSection}>
-          {/* Join Multiplayer */}
-          <View style={styles.joinContainer}>
-            <Text style={styles.joinLabel}>RESTORE SESSION</Text>
-            <View style={styles.joinInputRow}>
-              <TextInput
-                style={styles.joinInput}
-                placeholder="ENTER CODE"
-                placeholderTextColor="rgba(0,0,0,0.2)"
-                value={codeInput}
-                onChangeText={setCodeInput}
-                maxLength={6}
-                autoCapitalize="characters"
-              />
-              <AnimatedPressable style={styles.joinBtn} onPress={handleRestoreCode}>
-                <Text style={styles.joinBtnText}>→</Text>
+            <FloatingView amplitude={4} duration={1800}>
+              <AnimatedPressable style={styles.newGameBtn} onPress={handleNewGame}>
+                <Text style={styles.newGameText}>NEW GAME</Text>
               </AnimatedPressable>
-            </View>
-            {restoreError ? <Text style={styles.errorText}>{restoreError}</Text> : null}
-          </View>
+            </FloatingView>
 
-          {/* New Game */}
-          <FloatingView amplitude={4} duration={1800}>
-            <AnimatedPressable style={styles.newGameBtn} onPress={handleNewGame}>
-              <Text style={styles.newGameText}>NEW GAME</Text>
-            </AnimatedPressable>
-          </FloatingView>
-
-          {/* Credits */}
-          <View style={styles.creditContainer}>
-            <Text style={styles.creditText}>BUILT BY PRATHMESH DESHKAR</Text>
-          </View>
-        </View>
-      </View>
-      <Modal visible={!!sessionToDelete} transparent animationType="fade" onRequestClose={() => setSessionToDelete(null)}>
-        <View style={styles.dialogBackdrop}>
-          <View style={styles.dialogCard}>
-            <Text style={styles.dialogTitle}>DELETE SESSION?</Text>
-            <Text style={styles.dialogMessage}>This will permanently delete this session from your history.</Text>
-            <View style={styles.dialogButtons}>
-              <AnimatedPressable
-                containerStyle={{ flex: 1 }}
-                style={styles.dialogBtnCancel}
-                onPress={() => setSessionToDelete(null)}
-              >
-                <Text style={styles.dialogBtnCancelText}>KEEP</Text>
-              </AnimatedPressable>
-              <AnimatedPressable
-                containerStyle={{ flex: 1 }}
-                style={styles.dialogBtnConfirm}
-                onPress={() => {
-                  if (sessionToDelete) deleteSession(sessionToDelete);
-                  setSessionToDelete(null);
-                }}
-              >
-                <Text style={styles.dialogBtnConfirmText}>DELETE</Text>
-              </AnimatedPressable>
+            <View style={styles.creditContainer}>
+              <Text style={styles.creditText}>BUILT BY PRATHMESH DESHKAR</Text>
             </View>
           </View>
         </View>
-      </Modal>
-
+        <Modal visible={!!sessionToDelete} transparent animationType="fade" onRequestClose={() => setSessionToDelete(null)}>
+          <View style={styles.dialogBackdrop}>
+            <View style={styles.dialogCard}>
+              <Text style={styles.dialogTitle}>DELETE SESSION?</Text>
+              <Text style={styles.dialogMessage}>This will permanently delete this session from your history.</Text>
+              <View style={styles.dialogButtons}>
+                <AnimatedPressable
+                  containerStyle={{ flex: 1 }}
+                  style={styles.dialogBtnCancel}
+                  onPress={() => setSessionToDelete(null)}
+                >
+                  <Text style={styles.dialogBtnCancelText}>KEEP</Text>
+                </AnimatedPressable>
+                <AnimatedPressable
+                  containerStyle={{ flex: 1 }}
+                  style={styles.dialogBtnConfirm}
+                  onPress={() => {
+                    if (sessionToDelete) deleteSession(sessionToDelete);
+                    setSessionToDelete(null);
+                  }}
+                >
+                  <Text style={styles.dialogBtnConfirmText}>DELETE</Text>
+                </AnimatedPressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </KeyboardAvoidingView>
       <BrutalLoader visible={isConnecting} message="CONNECTING..." />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex1: {
+    flex: 1,
+  },
   safe: {
     flex: 1,
     backgroundColor: Colors.cream,
@@ -295,6 +297,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     justifyContent: 'space-between',
   },
+  listContent: {
+    paddingBottom: 24,
+  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -313,6 +318,9 @@ const styles = StyleSheet.create({
     fontFamily: Typography.bodySemibold,
     color: 'rgba(0,0,0,0.3)',
     letterSpacing: 2,
+  },
+  separator: {
+    height: 16,
   },
   emptySessionContainer: {
     padding: 24,
@@ -336,11 +344,11 @@ const styles = StyleSheet.create({
     ...Shadows.card,
   },
   sessionCardArchived: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    borderStyle: 'dashed',
-    opacity: 0.8,
-    elevation: 0,
-    shadowOpacity: 0,
+    opacity: 0.75,
+    transform: [{ scale: 0.98 }],
+  },
+  sessionCardEnded: {
+    borderStyle: 'dotted',
   },
   sessionCardHeader: {
     flexDirection: 'row',
@@ -549,7 +557,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   dialogBtnCancel: {
-    width: '100%',
     backgroundColor: Colors.white,
     borderWidth: 2,
     borderColor: Colors.ink,
@@ -563,7 +570,6 @@ const styles = StyleSheet.create({
     color: Colors.ink,
   },
   dialogBtnConfirm: {
-    width: '100%',
     backgroundColor: Colors.errorRed,
     borderWidth: 2,
     borderColor: Colors.ink,

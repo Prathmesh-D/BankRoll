@@ -13,22 +13,22 @@ export const STANDARD_US: EditionConfig = {
     { id: 'income_pct', label: 'Income Tax (10%)', amount: -1 },
   ],
   colorGroups: [
-    { id: 'brown',      label: 'Brown',      hex: '#8B4513', propertyIds: ['mediterranean', 'baltic'] },
+    { id: 'brown',      label: 'Brown',      hex: '#955436', propertyIds: ['mediterranean', 'baltic'] },
     { id: 'light_blue', label: 'Light Blue', hex: '#87CEEB', propertyIds: ['oriental', 'vermont', 'connecticut'] },
     { id: 'pink',       label: 'Pink',       hex: '#FF69B4', propertyIds: ['st_charles', 'states', 'virginia'] },
     { id: 'orange',     label: 'Orange',     hex: '#FFA500', propertyIds: ['st_james', 'tennessee', 'new_york'] },
     { id: 'red',        label: 'Red',        hex: '#DC143C', propertyIds: ['kentucky', 'indiana', 'illinois'] },
     { id: 'yellow',     label: 'Yellow',     hex: '#FFD700', propertyIds: ['atlantic', 'ventnor', 'marvin'] },
     { id: 'green',      label: 'Green',      hex: '#228B22', propertyIds: ['pacific', 'carolina', 'penn_ave'] },
-    { id: 'dark_blue',  label: 'Dark Blue',  hex: '#00008B', propertyIds: ['park_place', 'boardwalk'] },
-    { id: 'station',    label: 'Stations',   hex: '#1A1A1A', propertyIds: ['reading', 'penn_rr', 'bo_rr', 'short_line'] },
+    { id: 'dark_blue',  label: 'Dark Blue',  hex: '#0072BB', propertyIds: ['park_place', 'boardwalk'] },
+    { id: 'station',    label: 'Stations',   hex: '#6E6E6E', propertyIds: ['reading', 'penn_rr', 'bo_rr', 'short_line'] },
     { id: 'utility',    label: 'Utilities',  hex: '#C0C0C0', propertyIds: ['electric', 'water'] },
   ],
   properties: [
     // ── BROWN ─────────────────────────────────────────────────────────────────
     {
       id: 'mediterranean', name: 'Mediterranean Avenue',
-      colorGroup: 'brown', colorHex: '#8B4513',
+      colorGroup: 'brown', colorHex: '#955436',
       purchasePrice: 60, mortgageValue: 30, unmortgageCost: 33,
       houseCost: 50, hotelCost: 50, isStation: false, isUtility: false,
       rentTiers: [
@@ -39,7 +39,7 @@ export const STANDARD_US: EditionConfig = {
     },
     {
       id: 'baltic', name: 'Baltic Avenue',
-      colorGroup: 'brown', colorHex: '#8B4513',
+      colorGroup: 'brown', colorHex: '#955436',
       purchasePrice: 60, mortgageValue: 30, unmortgageCost: 33,
       houseCost: 50, hotelCost: 50, isStation: false, isUtility: false,
       rentTiers: [
@@ -255,7 +255,7 @@ export const STANDARD_US: EditionConfig = {
     // ── DARK BLUE ─────────────────────────────────────────────────────────────
     {
       id: 'park_place', name: 'Park Place',
-      colorGroup: 'dark_blue', colorHex: '#00008B',
+      colorGroup: 'dark_blue', colorHex: '#0072BB',
       purchasePrice: 350, mortgageValue: 175, unmortgageCost: 193,
       houseCost: 200, hotelCost: 200, isStation: false, isUtility: false,
       rentTiers: [
@@ -266,7 +266,7 @@ export const STANDARD_US: EditionConfig = {
     },
     {
       id: 'boardwalk', name: 'Boardwalk',
-      colorGroup: 'dark_blue', colorHex: '#00008B',
+      colorGroup: 'dark_blue', colorHex: '#0072BB',
       purchasePrice: 400, mortgageValue: 200, unmortgageCost: 220,
       houseCost: 200, hotelCost: 200, isStation: false, isUtility: false,
       rentTiers: [
@@ -278,7 +278,7 @@ export const STANDARD_US: EditionConfig = {
     // ── STATIONS ──────────────────────────────────────────────────────────────
     {
       id: 'reading', name: 'Reading Railroad',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -290,7 +290,7 @@ export const STANDARD_US: EditionConfig = {
     },
     {
       id: 'penn_rr', name: 'Pennsylvania Railroad',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -302,7 +302,7 @@ export const STANDARD_US: EditionConfig = {
     },
     {
       id: 'bo_rr', name: 'B. & O. Railroad',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -314,7 +314,7 @@ export const STANDARD_US: EditionConfig = {
     },
     {
       id: 'short_line', name: 'Short Line Railroad',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [

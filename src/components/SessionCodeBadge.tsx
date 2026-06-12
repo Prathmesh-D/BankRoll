@@ -32,15 +32,12 @@ export default function SessionCodeBadge({ code }: Props) {
   }));
 
   const handleTap = useCallback(async () => {
-    // Copy to clipboard
     Clipboard.setString(code);
-
-    // Flash animation
+    // Flash animation on tap
     scale.value = withSequence(
       withTiming(1.1, { duration: 80 }),
       withSpring(1, { damping: 15, stiffness: 300 })
     );
-
     if (Platform.OS === 'android') {
       ToastAndroid.show('Code copied!', ToastAndroid.SHORT);
     }
@@ -85,9 +82,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 2,
-  },
-  icon: {
-    fontSize: 12,
   },
   code: {
     fontSize: 14,

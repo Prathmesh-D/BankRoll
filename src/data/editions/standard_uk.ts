@@ -13,22 +13,22 @@ export const STANDARD_UK: EditionConfig = {
     { id: 'income_pct', label: 'Income Tax (10%)', amount: -1 },
   ],
   colorGroups: [
-    { id: 'brown',      label: 'Brown',      hex: '#8B4513', propertyIds: ['old_kent_road', 'whitechapel'] },
+    { id: 'brown',      label: 'Brown',      hex: '#955436', propertyIds: ['old_kent_road', 'whitechapel'] },
     { id: 'light_blue', label: 'Light Blue', hex: '#87CEEB', propertyIds: ['angel_islington', 'euston_road', 'pentonville'] },
     { id: 'pink',       label: 'Pink',       hex: '#FF69B4', propertyIds: ['pall_mall', 'whitehall', 'northumberland'] },
     { id: 'orange',     label: 'Orange',     hex: '#FFA500', propertyIds: ['bow_street', 'marlborough', 'vine_street'] },
     { id: 'red',        label: 'Red',        hex: '#DC143C', propertyIds: ['strand', 'fleet_street', 'trafalgar'] },
     { id: 'yellow',     label: 'Yellow',     hex: '#FFD700', propertyIds: ['leicester', 'coventry', 'piccadilly'] },
     { id: 'green',      label: 'Green',      hex: '#228B22', propertyIds: ['bond_street', 'oxford_street', 'regent_street'] },
-    { id: 'dark_blue',  label: 'Dark Blue',  hex: '#00008B', propertyIds: ['park_lane', 'mayfair'] },
-    { id: 'station',    label: 'Stations',   hex: '#1A1A1A', propertyIds: ['kings_cross', 'marylebone', 'fenchurch', 'liverpool_st'] },
+    { id: 'dark_blue',  label: 'Dark Blue',  hex: '#0072BB', propertyIds: ['park_lane', 'mayfair'] },
+    { id: 'station',    label: 'Stations',   hex: '#6E6E6E', propertyIds: ['kings_cross', 'marylebone', 'fenchurch', 'liverpool_st'] },
     { id: 'utility',    label: 'Utilities',  hex: '#C0C0C0', propertyIds: ['electric', 'water'] },
   ],
   properties: [
     // ── BROWN ─────────────────────────────────────────────────────────────────
     {
       id: 'old_kent_road', name: 'Old Kent Road',
-      colorGroup: 'brown', colorHex: '#8B4513',
+      colorGroup: 'brown', colorHex: '#955436',
       purchasePrice: 60, mortgageValue: 30, unmortgageCost: 33,
       houseCost: 50, hotelCost: 50, isStation: false, isUtility: false,
       rentTiers: [
@@ -39,7 +39,7 @@ export const STANDARD_UK: EditionConfig = {
     },
     {
       id: 'whitechapel', name: 'Whitechapel Road',
-      colorGroup: 'brown', colorHex: '#8B4513',
+      colorGroup: 'brown', colorHex: '#955436',
       purchasePrice: 60, mortgageValue: 30, unmortgageCost: 33,
       houseCost: 50, hotelCost: 50, isStation: false, isUtility: false,
       rentTiers: [
@@ -255,7 +255,7 @@ export const STANDARD_UK: EditionConfig = {
     // ── DARK BLUE ─────────────────────────────────────────────────────────────
     {
       id: 'park_lane', name: 'Park Lane',
-      colorGroup: 'dark_blue', colorHex: '#00008B',
+      colorGroup: 'dark_blue', colorHex: '#0072BB',
       purchasePrice: 350, mortgageValue: 175, unmortgageCost: 193,
       houseCost: 200, hotelCost: 200, isStation: false, isUtility: false,
       rentTiers: [
@@ -266,7 +266,7 @@ export const STANDARD_UK: EditionConfig = {
     },
     {
       id: 'mayfair', name: 'Mayfair',
-      colorGroup: 'dark_blue', colorHex: '#00008B',
+      colorGroup: 'dark_blue', colorHex: '#0072BB',
       purchasePrice: 400, mortgageValue: 200, unmortgageCost: 220,
       houseCost: 200, hotelCost: 200, isStation: false, isUtility: false,
       rentTiers: [
@@ -278,7 +278,7 @@ export const STANDARD_UK: EditionConfig = {
     // ── STATIONS ──────────────────────────────────────────────────────────────
     {
       id: 'kings_cross', name: "King's Cross Station",
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -290,7 +290,7 @@ export const STANDARD_UK: EditionConfig = {
     },
     {
       id: 'marylebone', name: 'Marylebone Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -302,7 +302,7 @@ export const STANDARD_UK: EditionConfig = {
     },
     {
       id: 'fenchurch', name: 'Fenchurch St. Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -314,7 +314,7 @@ export const STANDARD_UK: EditionConfig = {
     },
     {
       id: 'liverpool_st', name: 'Liverpool St. Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [

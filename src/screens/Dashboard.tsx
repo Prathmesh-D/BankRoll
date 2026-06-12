@@ -20,6 +20,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   runOnJS,
+  LinearTransition,
+  SharedValue,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { Springs } from '../theme/animations';
@@ -38,10 +40,21 @@ import TransactionLog from '../components/TransactionLog';
 import HouseRulesPanel from '../components/HouseRulesPanel';
 import type { Entity } from '../types/entity';
 import { formatBalance } from '../domain/currencyFormatter';
-import type { NewTransaction } from '../types/transaction';
 import { playSound } from '../utils/SoundManager';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
+
+interface DraggableCardProps {
+  entity: Entity;
+  onDragStart?: (entity: Entity) => void;
+  onDragUpdate?: (entity: Entity, x: number, y: number) => void;
+  onDragEnd?: (entity: Entity) => void;
+  children: React.ReactNode;
+  style?: object;
+  cursorX: SharedValue<number>;
+  cursorY: SharedValue<number>;
+  isDragging: SharedValue<boolean>;
+}
 
 function DraggableCard({ 
   entity, 
@@ -53,7 +66,7 @@ function DraggableCard({
   cursorX,
   cursorY,
   isDragging,
-}: any) {
+}: DraggableCardProps) {
   const scale = useSharedValue(1);
 
   const panGesture = Gesture.Pan()
@@ -96,10 +109,18 @@ function DraggableCard({
 
 export default function Dashboard() {
   const navigation = useNavigation<Nav>();
-  const { session, executeTransaction, undoTransaction, updateEntity } = useGameStore();
+  const { session, executeTransaction, undoTransaction, updateEntity, bankruptEntity } = useGameStore();
   const { toggle: toggleCalc } = useCalculatorStore();
 
-  const [mortgageTarget, setMortgageTarget] = useState<Entity | null>(null);
+  const [mortgageTargetId, setMortgageTargetId] = useState<string | null>(null);
+  const mortgageTarget = mortgageTargetId ? session?.entities.find(e => e.id === mortgageTargetId) || null : null;
+  const prevMortgageTargetRef = useRef<Entity | null>(null);
+  React.useEffect(() => {
+    if (mortgageTarget) {
+      prevMortgageTargetRef.current = mortgageTarget;
+    }
+  }, [mortgageTarget]);
+  const displayMortgageTarget = mortgageTarget || prevMortgageTargetRef.current;
   const [selectedMortgages, setSelectedMortgages] = useState<Property[]>([]);
   const [mortgageDialog, setMortgageDialog] = useState<{ properties: Property[]; isMortgaged: boolean } | null>(null);
   const [bankruptDialog, setBankruptDialog] = useState<Entity | null>(null);
@@ -128,24 +149,13 @@ export default function Dashboard() {
     return () => subscription.remove();
   }, [navigation]);
 
-  if (!session) {
-    return (
-      <View style={styles.noSession}>
-        <Text style={styles.noSessionText}>No active game</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-          <Text style={styles.noSessionLink}>Go to Home</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const entities = React.useMemo(() => session?.entities || [], [session?.entities]);
+  const editionConfig = session?.editionConfig;
+  const houseRules = session?.houseRules;
+  const transactions = session?.transactions || [];
 
-  const { entities, editionConfig, houseRules, transactions } = session;
-  const players = entities.filter(e => e.type === 'player');
-  const bank = entities.find(e => e.type === 'bank')!;
-  const activeRulesCount = [
-    houseRules.allowNegative100,
-    houseRules.infiniteBankMoney,
-  ].filter(Boolean).length + houseRules.customRules.filter(r => r.isActive).length;
+  const players = React.useMemo(() => entities.filter(e => e.type === 'player'), [entities]);
+  const bank = React.useMemo(() => entities.find(e => e.type === 'bank'), [entities]);
 
   const measureTargets = useCallback(() => {
     Object.keys(viewRefs.current).forEach(id => {
@@ -172,7 +182,7 @@ export default function Dashboard() {
   }, [measureTargets]);
 
   const handleDragUpdate = useCallback((entity: Entity, x: number, y: number) => {
-    let hitId = null;
+    let hitId: string | null = null;
     const zones = dropZones.current;
     
     // Add a 20px buffer to make hit detection more generous
@@ -191,12 +201,14 @@ export default function Dashboard() {
     }
     
     setHoveredTargetId(prev => {
-      if (prev !== hitId) return hitId;
+      if (prev !== hitId) {
+        return hitId;
+      }
       return prev;
     });
   }, []);
 
-  const handleDragEnd = useCallback((entity: Entity) => {
+  const handleDragEnd = useCallback((_entity: Entity) => {
     setHoveredTargetId(prevHit => {
       if (prevHit) {
         const targetEntity = entities.find(e => e.id === prevHit);
@@ -211,10 +223,11 @@ export default function Dashboard() {
   }, [entities]);
 
   const handleMortgageTarget = useCallback((entity: Entity) => {
-    setMortgageTarget(entity);
+    setMortgageTargetId(entity.id);
   }, []);
 
   const handleSalary = useCallback((entity: Entity) => {
+    if (!editionConfig) return;
     const bankEntity = entities.find(e => e.type === 'bank');
     if (!bankEntity) return;
     const txId = executeTransaction({
@@ -222,7 +235,7 @@ export default function Dashboard() {
       toEntityId: entity.id,
       amount: editionConfig.salary,
       type: 'SALARY',
-      label: `Salary · Go`,
+      label: `Salary · ${entity.name}`,
     });
   }, [entities, editionConfig, executeTransaction]);
 
@@ -249,10 +262,12 @@ export default function Dashboard() {
     });
   }, [mortgageTarget]);
 
+  const handleDoubleTapBalance = useCallback(() => {}, []);
+
   const handlePay = useCallback((amount: number, label?: string, propertyId?: string) => {
     if (!payFrom || !payTo) return;
     
-    const minLimit = houseRules.allowNegative100 ? -100 : 0;
+    const minLimit = houseRules?.allowNegative100 ? -100 : 0;
     if (payFrom.type !== 'bank' && payFrom.balance - amount < minLimit) {
       setFundsRequiredMessage(`You cannot go below ${minLimit}. Please mortgage properties to raise funds first.`);
       setPayFrom(null);
@@ -270,7 +285,7 @@ export default function Dashboard() {
     });
     setPayFrom(null);
     setPayTo(null);
-  }, [payFrom, payTo, executeTransaction]);
+  }, [payFrom, payTo, houseRules?.allowNegative100, executeTransaction]);
 
   const handleEndGame = useCallback(() => {
     setShowEndGameModal(true);
@@ -285,7 +300,18 @@ export default function Dashboard() {
       ],
       opacity: isDragging.value ? 1 : 0,
     };
-  });
+  }, [cursorX, cursorY, isDragging]);
+
+  if (!session || !editionConfig || !bank) {
+    return (
+      <View style={styles.noSession}>
+        <Text style={styles.noSessionText}>No active game</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.noSessionLink}>Go to Home</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -320,8 +346,8 @@ export default function Dashboard() {
             <View style={styles.bankAccent} />
             <View style={styles.bankContent}>
               <Text style={styles.bankLabel}>BANK</Text>
-              <Text style={[styles.bankBalance, houseRules.infiniteBankMoney && { fontSize: 80, lineHeight: 80, paddingBottom: 16 }]}>
-                {houseRules.infiniteBankMoney ? '∞' : formatBalance(bank.balance, editionConfig.currency)}
+              <Text style={[styles.bankBalance, houseRules?.infiniteBankMoney && styles.bankBalanceInfinite]}>
+                {houseRules?.infiniteBankMoney ? '∞' : formatBalance(bank.balance, editionConfig.currency)}
               </Text>
             </View>
           </DraggableCard>
@@ -349,7 +375,7 @@ export default function Dashboard() {
               onDragStart={handleDragStart}
               onDragUpdate={handleDragUpdate}
               onDragEnd={handleDragEnd}
-              onDoubleTapBalance={() => {}}
+              onDoubleTapBalance={handleDoubleTapBalance}
               cursorX={cursorX}
               cursorY={cursorY}
               isDragging={isDragging}
@@ -374,74 +400,85 @@ export default function Dashboard() {
         <Image source={require('../../assets/images/logo.png')} style={styles.fabLogoImage} />
       </TouchableOpacity>
 
-      <Modal visible={!!mortgageTarget} animationType="slide">
-        {mortgageTarget && (
-          <SafeAreaView style={{ flex: 1, backgroundColor: Colors.parchment, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
-            <View style={{ padding: 16, borderBottomWidth: 2, borderBottomColor: Colors.ink, backgroundColor: Colors.white, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontFamily: Typography.display, fontSize: 24, color: Colors.ink, letterSpacing: 1, flex: 1 }} numberOfLines={1}>
-                {mortgageTarget.name}'s Properties
+      <Modal 
+        visible={!!mortgageTargetId} 
+        animationType="slide" 
+        onRequestClose={() => {
+          setMortgageTargetId(null);
+          setSelectedMortgages([]);
+        }}
+      >
+        {displayMortgageTarget && (
+          <SafeAreaView style={styles.modalSafe}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle} numberOfLines={1}>
+                {displayMortgageTarget.name}'s Properties
               </Text>
-              <TouchableOpacity onPress={() => setMortgageTarget(null)}>
-                <Text style={{ fontFamily: Typography.display, fontSize: 24, color: Colors.errorRed }}>X</Text>
+              <TouchableOpacity onPress={() => setMortgageTargetId(null)}>
+                <Text style={styles.modalCloseIcon}>X</Text>
               </TouchableOpacity>
             </View>
-            <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: Colors.parchment, borderBottomWidth: 2, borderBottomColor: Colors.ink, alignItems: 'center' }}>
+            <View style={styles.bankruptContainer}>
               <TouchableOpacity
-                onLongPress={() => setBankruptDialog(mortgageTarget)}
+                onLongPress={() => setBankruptDialog(displayMortgageTarget)}
                 delayLongPress={1000}
-                style={{ paddingHorizontal: 24, paddingVertical: 12, backgroundColor: Colors.errorRed, borderWidth: 2, borderColor: Colors.ink, shadowColor: Colors.ink, shadowOffset: { width: 4, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}
+                style={styles.bankruptBtn}
               >
-                <Text style={{ fontFamily: Typography.display, fontSize: 14, color: Colors.white, letterSpacing: 1 }}>HOLD TO BANKRUPT</Text>
+                <Text style={styles.bankruptBtnText}>HOLD TO BANKRUPT</Text>
               </TouchableOpacity>
             </View>
             
-            {mortgageTarget.mortgagedProperties.length > 0 && (
-              <View style={{ padding: 16, borderBottomWidth: 2, borderBottomColor: Colors.ink, backgroundColor: Colors.cream }}>
-                <Text style={{ fontFamily: Typography.display, fontSize: 16, color: Colors.ink, marginBottom: 8, letterSpacing: 1 }}>MORTGAGED PROPERTIES</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {mortgageTarget.mortgagedProperties.map(propId => {
+            {displayMortgageTarget.mortgagedProperties.length > 0 && (
+              <View style={styles.mortgagedListContainer}>
+                <Text style={styles.mortgagedListTitle}>MORTGAGED PROPERTIES</Text>
+                <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {displayMortgageTarget.mortgagedProperties.map(propId => {
                     const prop = editionConfig.properties.find(p => p.id === propId);
                     if (!prop) return null;
                     return (
-                      <View key={prop.id} style={{ marginRight: 16, width: 140, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, padding: 8 }}>
-                        <Text style={{ fontFamily: Typography.bodySemibold, fontSize: 14, color: Colors.ink, marginBottom: 8, height: 40 }} numberOfLines={2}>{prop.name}</Text>
+                      <Animated.View key={prop.id} layout={LinearTransition} style={[styles.mortgagedPropCard, { backgroundColor: prop.colorHex || Colors.white }]}>
+                        <Text style={[styles.mortgagedPropName, { fontFamily: Typography.display, textTransform: 'uppercase' }]} numberOfLines={2}>{prop.name}</Text>
                         <TouchableOpacity 
-                          style={{ backgroundColor: Colors.errorRed, paddingVertical: 8, alignItems: 'center', borderWidth: 2, borderColor: Colors.ink }}
+                          style={styles.payOffBtn}
                           onPress={() => setMortgageDialog({ properties: [prop], isMortgaged: true })}
                         >
-                          <Text style={{ fontFamily: Typography.display, fontSize: 12, color: Colors.white }}>PAY OFF · {formatBalance(prop.unmortgageCost, editionConfig.currency)}</Text>
+                          <Text style={styles.payOffBtnText}>PAY OFF · {formatBalance(prop.unmortgageCost, editionConfig.currency)}</Text>
                         </TouchableOpacity>
-                      </View>
+                      </Animated.View>
                     );
                   })}
-                </ScrollView>
+                </Animated.ScrollView>
               </View>
             )}
 
             <PropertyPicker
               editionConfig={editionConfig}
-              mortgagedByEntity={mortgageTarget}
+              mortgagedByEntity={displayMortgageTarget}
               allEntities={entities}
               selectedPropertyIds={selectedMortgages.map(p => p.id)}
               hideHeader={true}
               onSelect={handlePropertySelect}
               onClose={() => {
-                setMortgageTarget(null);
+                setMortgageTargetId(null);
                 setSelectedMortgages([]);
               }}
             />
             
             {selectedMortgages.length > 0 && (
-              <View style={{ position: 'absolute', bottom: 32, left: 24, right: 24, zIndex: 100 }}>
+              <View style={styles.mortgageFloatingAction}>
                 <AnimatedPressable
-                  style={{ backgroundColor: Colors.ink, padding: 16, alignItems: 'center', borderWidth: 2, borderColor: Colors.white }}
+                  style={styles.confirmSelectionBtn}
                   onPress={() => {
-                    const isM = isMortgaged(selectedMortgages[0].id, mortgageTarget);
+                    const isM = isMortgaged(selectedMortgages[0].id, displayMortgageTarget);
                     setMortgageDialog({ properties: selectedMortgages, isMortgaged: isM });
                   }}
                 >
-                  <Text style={{ fontFamily: Typography.display, fontSize: 16, color: Colors.white, letterSpacing: 1 }}>
-                    CONFIRM {selectedMortgages.length} SELECTION{selectedMortgages.length > 1 ? 'S' : ''}
+                  <Text style={styles.confirmSelectionText}>
+                    CONFIRM {selectedMortgages.length} SELECTION{selectedMortgages.length > 1 ? 'S' : ''} (
+                    {formatBalance(
+                      selectedMortgages.reduce((sum, p) => sum + (isMortgaged(p.id, mortgageTarget) ? p.unmortgageCost : p.mortgageValue), 0),
+                      editionConfig.currency
+                    )})
                   </Text>
                 </AnimatedPressable>
               </View>
@@ -460,20 +497,21 @@ export default function Dashboard() {
               </Text>
               <View style={styles.dialogButtons}>
                 <AnimatedPressable
-                  containerStyle={{ flex: 1 }}
+                  containerStyle={styles.flex1}
                   style={styles.dialogBtnCancel}
                   onPress={() => setBankruptDialog(null)}
                 >
                   <Text style={styles.dialogBtnCancelText}>CANCEL</Text>
                 </AnimatedPressable>
                 <AnimatedPressable
-                  containerStyle={{ flex: 1 }}
+                  containerStyle={styles.flex1}
                   style={styles.dialogBtnConfirm}
                   onPress={() => {
-                    playSound('wompwomp');
-                    updateEntity(bankruptDialog.id, { isActive: false, mortgagedProperties: [] });
+                    // Use bankruptEntity() to properly transfer balance to bank
+                    bankruptEntity(bankruptDialog.id);
                     setBankruptDialog(null);
-                    setMortgageTarget(null);
+                    setMortgageTargetId(null);
+                    setSelectedMortgages([]);
                   }}
                 >
                   <Text style={styles.dialogBtnConfirmText}>BANKRUPT</Text>
@@ -485,7 +523,7 @@ export default function Dashboard() {
       </Modal>
 
       <Modal visible={!!mortgageDialog} transparent animationType="fade" onRequestClose={() => setMortgageDialog(null)}>
-        {mortgageDialog && mortgageTarget && (
+        {mortgageDialog && displayMortgageTarget && (
           <View style={styles.dialogBackdrop}>
             <View style={styles.dialogCard}>
               <Text style={styles.dialogTitle}>
@@ -498,23 +536,23 @@ export default function Dashboard() {
               </Text>
               <View style={styles.dialogButtons}>
                 <AnimatedPressable
-                  containerStyle={{ flex: 1 }}
+                  containerStyle={styles.flex1}
                   style={styles.dialogBtnCancel}
                   onPress={() => setMortgageDialog(null)}
                 >
                   <Text style={styles.dialogBtnCancelText}>CANCEL</Text>
                 </AnimatedPressable>
                 <AnimatedPressable
-                  containerStyle={{ flex: 1 }}
+                  containerStyle={styles.flex1}
                   style={styles.dialogBtnConfirm}
                   onPress={() => {
                     const bankEntity = entities.find(e => e.type === 'bank')!;
                     
                     if (mortgageDialog.isMortgaged) {
                       const totalCost = mortgageDialog.properties.reduce((acc, p) => acc + p.unmortgageCost, 0);
-                      const minLimit = houseRules.allowNegative100 ? -100 : 0;
-                      if (mortgageTarget.type !== 'bank') {
-                        if (mortgageTarget.balance - totalCost < minLimit) {
+                      const minLimit = houseRules?.allowNegative100 ? -100 : 0;
+                      if (displayMortgageTarget.type !== 'bank') {
+                        if (displayMortgageTarget.balance - totalCost < minLimit) {
                           setFundsRequiredMessage(`You cannot go below ${minLimit}. Please mortgage other properties to raise funds first.`);
                           setMortgageDialog(null);
                           return;
@@ -525,27 +563,29 @@ export default function Dashboard() {
                     mortgageDialog.properties.forEach(prop => {
                       if (mortgageDialog.isMortgaged) {
                         executeTransaction({
-                          fromEntityId: mortgageTarget.id,
+                          fromEntityId: displayMortgageTarget.id,
                           toEntityId: bankEntity.id,
                           amount: prop.unmortgageCost,
                           type: 'MORTGAGE_REPAY',
                           label: `Unmortgage ${prop.name}`,
                           propertyId: prop.id,
-                        });
+                        }, { skipDebounce: true });
                       } else {
                         executeTransaction({
                           fromEntityId: bankEntity.id,
-                          toEntityId: mortgageTarget.id,
+                          toEntityId: displayMortgageTarget.id,
                           amount: prop.mortgageValue,
                           type: 'MORTGAGE',
                           label: `Mortgage ${prop.name}`,
                           propertyId: prop.id,
-                        });
+                        }, { skipDebounce: true });
                       }
                     });
+                    if (mortgageDialog.isMortgaged) {
+                      playSound('whoosh');
+                    }
                     setMortgageDialog(null);
                     setSelectedMortgages([]);
-                    setMortgageTarget(null);
                   }}
                 >
                   <Text style={styles.dialogBtnConfirmText}>
@@ -583,15 +623,18 @@ export default function Dashboard() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowTransactionLog(false)}
       >
-        <TransactionLog
-          transactions={transactions}
-          entities={entities}
-          currency={editionConfig.currency}
-          onUndo={(txId) => {
-            undoTransaction(txId);
-          }}
-          onClose={() => setShowTransactionLog(false)}
-        />
+        {showTransactionLog && (
+          <TransactionLog
+            transactions={transactions}
+            entities={entities}
+            currency={editionConfig.currency}
+            undoStack={session?.undoStack ?? []}
+            onUndo={(txId) => {
+              undoTransaction(txId);
+            }}
+            onClose={() => setShowTransactionLog(false)}
+          />
+        )}
       </Modal>
 
       <Modal
@@ -600,7 +643,7 @@ export default function Dashboard() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowHouseRules(false)}
       >
-        <HouseRulesPanel onClose={() => setShowHouseRules(false)} />
+        {showHouseRules && <HouseRulesPanel onClose={() => setShowHouseRules(false)} />}
       </Modal>
 
       <Modal visible={showEndGameModal} transparent animationType="fade" onRequestClose={() => setShowEndGameModal(false)}>
@@ -610,18 +653,18 @@ export default function Dashboard() {
             <Text style={styles.dialogMessage}>This will finalise the ledger and archive the current session.</Text>
             <View style={styles.dialogButtons}>
               <AnimatedPressable
-                containerStyle={{ flex: 1 }}
+                containerStyle={styles.flex1}
                 style={styles.dialogBtnCancel}
                 onPress={() => setShowEndGameModal(false)}
               >
                 <Text style={styles.dialogBtnCancelText}>KEEP PLAYING</Text>
               </AnimatedPressable>
               <AnimatedPressable
-                containerStyle={{ flex: 1 }}
+                containerStyle={styles.flex1}
                 style={styles.dialogBtnConfirm}
                 onPress={() => {
                   setShowEndGameModal(false);
-                  navigation.navigate('GameSummary');
+                  navigation.navigate('GameSummary', { isEnding: true });
                 }}
               >
                 <Text style={styles.dialogBtnConfirmText}>END GAME</Text>
@@ -638,14 +681,14 @@ export default function Dashboard() {
             <Text style={styles.dialogMessage}>Do you want to return to the home menu? Your session will be saved automatically.</Text>
             <View style={styles.dialogButtons}>
               <AnimatedPressable
-                containerStyle={{ flex: 1 }}
+                containerStyle={styles.flex1}
                 style={styles.dialogBtnCancel}
                 onPress={() => setShowLeaveGameDialog(false)}
               >
                 <Text style={styles.dialogBtnCancelText}>STAY</Text>
               </AnimatedPressable>
               <AnimatedPressable
-                containerStyle={{ flex: 1 }}
+                containerStyle={styles.flex1}
                 style={styles.dialogBtnConfirm}
                 onPress={() => {
                   setShowLeaveGameDialog(false);
@@ -667,7 +710,7 @@ export default function Dashboard() {
               <Text style={styles.dialogMessage}>{fundsRequiredMessage}</Text>
               <View style={styles.dialogButtons}>
                 <AnimatedPressable
-                  containerStyle={{ flex: 1 }}
+                  containerStyle={styles.flex1}
                   style={styles.dialogBtnConfirm}
                   onPress={() => setFundsRequiredMessage(null)}
                 >
@@ -718,7 +761,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     backgroundColor: Colors.cream,
     borderBottomWidth: 4,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    borderBottomColor: Colors.ink,
     minHeight: 60,
   },
   headerLeft: {},
@@ -744,8 +787,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   logButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.white,
@@ -826,6 +869,11 @@ const styles = StyleSheet.create({
     fontFamily: Typography.display,
     color: Colors.ink,
     letterSpacing: 1,
+  },
+  bankBalanceInfinite: {
+    fontSize: 80,
+    lineHeight: 80,
+    paddingBottom: 16,
   },
   playerGrid: {
     paddingHorizontal: Spacing.md,
@@ -964,5 +1012,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Typography.display,
     color: Colors.white,
+  },
+  modalSafe: { flex: 1, backgroundColor: Colors.parchment, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
+  modalHeader: { padding: 16, borderBottomWidth: 2, borderBottomColor: Colors.ink, backgroundColor: Colors.white, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  modalTitle: { fontFamily: Typography.display, fontSize: 24, color: Colors.ink, letterSpacing: 1, flex: 1 },
+  modalCloseIcon: { fontFamily: Typography.display, fontSize: 24, color: Colors.errorRed },
+  bankruptContainer: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: Colors.parchment, borderBottomWidth: 2, borderBottomColor: Colors.ink, alignItems: 'center' },
+  bankruptBtn: { paddingHorizontal: 24, paddingVertical: 12, backgroundColor: Colors.errorRed, borderWidth: 2, borderColor: Colors.ink, shadowColor: Colors.ink, shadowOffset: { width: 4, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 },
+  bankruptBtnText: { fontFamily: Typography.display, fontSize: 14, color: Colors.white, letterSpacing: 1 },
+  mortgagedListContainer: { padding: 16, borderBottomWidth: 2, borderBottomColor: Colors.ink, backgroundColor: Colors.cream },
+  mortgagedListTitle: { fontFamily: Typography.display, fontSize: 16, color: Colors.ink, marginBottom: 8, letterSpacing: 1 },
+  mortgagedPropCard: { marginRight: 16, width: 140, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, padding: 8 },
+  mortgagedPropName: { fontFamily: Typography.bodySemibold, fontSize: 14, color: Colors.ink, marginBottom: 8, height: 40 },
+  payOffBtn: { backgroundColor: Colors.cream, paddingVertical: 8, alignItems: 'center', borderWidth: 2, borderColor: Colors.ink },
+  payOffBtnText: { fontFamily: Typography.display, fontSize: 12, color: Colors.ink },
+  mortgageFloatingAction: { position: 'absolute', bottom: 32, left: 24, right: 24, zIndex: 100 },
+  mortgageFloatingBadge: { alignItems: 'center', marginBottom: 8 },
+  mortgageFloatingText: { fontFamily: Typography.display, fontSize: 16, color: Colors.ink, backgroundColor: Colors.cream, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, overflow: 'hidden', borderWidth: 2, borderColor: Colors.ink },
+  flex1: {
+    flex: 1,
+  },
+  confirmSelectionBtn: {
+    backgroundColor: Colors.ink,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.white,
+  },
+  confirmSelectionText: {
+    fontFamily: Typography.display,
+    fontSize: 16,
+    color: Colors.white,
+    letterSpacing: 1,
   },
 });

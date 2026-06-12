@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { playSound } from '../utils/SoundManager';
 import 'react-native-get-random-values';
@@ -11,7 +10,9 @@ import type { Entity } from '../types/entity';
 import type { Transaction } from '../types/transaction';
 import type { NewTransaction } from '../types/transaction';
 import type { HouseRules } from '../types/houseRules';
+import type { CustomRule } from '../types/houseRules';
 import type { AppSettings } from '../types/settings';
+import type { HouseRuleKey } from '../types/primitives';
 
 import * as StorageAPI from '../infrastructure/storage';
 import { migrateSession } from '../infrastructure/migrations';
@@ -19,19 +20,13 @@ import { generateUniqueCode } from '../domain/sessionCode';
 import { validateTransaction, applyHouseRules, computeBalanceDeltas } from '../domain/transactionEngine';
 import { defaultHouseRules, defaultAppSettings, PLAYER_COLOURS, DEFAULT_AVATARS, UNDO_WINDOW_MS } from '../domain/defaults';
 import { getEditionConfig } from '../data/editions';
+import type { EditionId } from '../types/primitives';
 
-// ─── Custom MMKV Storage Adapter for Zustand ─────────────────────────────────
-const mmkvStorage = {
-  getItem: (name: string): string | null => {
-    return StorageAPI.storage.getString(name) ?? null;
-  },
-  setItem: (name: string, value: string): void => {
-    StorageAPI.storage.set(name, value);
-  },
-  removeItem: (name: string): void => {
-    (StorageAPI.storage as any).delete(name);
-  },
-};
+// ─── Debounce Guard ───────────────────────────────────────────────────────────
+// Prevents duplicate transactions from rapid double-taps.
+// Uses a module-level ref (not React state) so it survives renders.
+let _lastTransactionTime = 0;
+const TRANSACTION_DEBOUNCE_MS = 300;
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 export const useGameStore = create<GameStore>()(
@@ -49,9 +44,9 @@ export const useGameStore = create<GameStore>()(
       const sessionCode = generateUniqueCode(StorageAPI.getSessionCodes());
 
       // Resolve edition config
-      let editionConfig = config.customEditionConfig as any;
+      let editionConfig = config.customEditionConfig as ReturnType<typeof getEditionConfig>;
       if (!editionConfig && config.edition !== 'custom') {
-        editionConfig = getEditionConfig(config.edition);
+        editionConfig = getEditionConfig(config.edition as EditionId);
       }
 
       const now = Date.now();
@@ -89,8 +84,6 @@ export const useGameStore = create<GameStore>()(
         createdAt: now,
       });
 
-
-
       const houseRules: HouseRules = {
         ...defaultHouseRules(editionConfig),
         ...config.houseRules,
@@ -102,7 +95,7 @@ export const useGameStore = create<GameStore>()(
         schemaVersion: 2,
         createdAt: now,
         updatedAt: now,
-        edition: config.edition as any,
+        edition: config.edition as EditionId,
         editionConfig,
         entities,
         transactions: [],
@@ -181,7 +174,7 @@ export const useGameStore = create<GameStore>()(
     },
 
     // ─── Entity Actions ────────────────────────────────────────────────────
-    updateEntity: (id: string, patch): void => {
+    updateEntity: (id: string, patch: Partial<Entity>): void => {
       set(state => {
         if (!state.session) return;
         const entity = state.session.entities.find(e => e.id === id);
@@ -226,15 +219,26 @@ export const useGameStore = create<GameStore>()(
         }
         e.balance = 0;
         e.isActive = false;
+        // Clear mortgaged properties on bankruptcy
+        e.mortgagedProperties = [];
         s.session.updatedAt = now;
       });
 
       const sess = get().session;
       if (sess) StorageAPI.saveSession(sess);
+      playSound('wompwomp');
     },
 
     // ─── Transaction Actions ───────────────────────────────────────────────
-    executeTransaction: (tx: NewTransaction): string => {
+    executeTransaction: (tx: NewTransaction, options?: { skipDebounce?: boolean }): string => {
+      // ── Debounce guard: prevent duplicate transactions from rapid taps ──
+      const now = Date.now();
+      if (!options?.skipDebounce && now - _lastTransactionTime < TRANSACTION_DEBOUNCE_MS) {
+        // Return empty string to indicate skipped (caller should handle this)
+        return '';
+      }
+      _lastTransactionTime = now;
+
       const state = get();
       if (!state.session) throw new Error('No active session');
 
@@ -242,7 +246,6 @@ export const useGameStore = create<GameStore>()(
       const adjustedTx = applyHouseRules(tx, state.session.houseRules, state.session);
 
       const txId = uuidv4();
-      const now = Date.now();
       const expiresAt = now + (state.session.settings.undoWindowMs ?? UNDO_WINDOW_MS);
 
       const transaction: Transaction = {
@@ -272,10 +275,12 @@ export const useGameStore = create<GameStore>()(
             }
           }
 
-          // Apply mortgage states
+          // Apply mortgage states — single source of truth here
           if (transaction.propertyId) {
              if (transaction.type === 'MORTGAGE' && entity.id === transaction.toEntityId) {
-                 entity.mortgagedProperties.push(transaction.propertyId);
+                 if (!entity.mortgagedProperties.includes(transaction.propertyId)) {
+                   entity.mortgagedProperties.push(transaction.propertyId);
+                 }
              }
              if (transaction.type === 'MORTGAGE_REPAY' && entity.id === transaction.fromEntityId) {
                  entity.mortgagedProperties = entity.mortgagedProperties.filter(id => id !== transaction.propertyId);
@@ -283,6 +288,11 @@ export const useGameStore = create<GameStore>()(
           }
         });
         s.session.transactions.push(transaction);
+
+        // Prune expired undo entries lazily before adding the new one
+        s.session.undoStack = s.session.undoStack.filter(
+          e => Date.now() < e.expiresAt
+        );
         s.session.undoStack.push({ transactionId: txId, expiresAt });
         s.session.updatedAt = now;
       });
@@ -305,10 +315,9 @@ export const useGameStore = create<GameStore>()(
         playSound('transaction');
       }
 
-      // Auto-clear undo entry after expiry
-      setTimeout(() => {
-        get().clearUndoEntry(txId);
-      }, state.session.settings.undoWindowMs ?? UNDO_WINDOW_MS);
+      // ── No more setTimeout here — undo expiry is handled reactively ──
+      // Expired entries are pruned lazily on the next executeTransaction call,
+      // and the TransactionLog checks undoStack membership at render time.
 
       return txId;
     },
@@ -361,7 +370,9 @@ export const useGameStore = create<GameStore>()(
                  entity.mortgagedProperties = entity.mortgagedProperties.filter(id => id !== orig.propertyId);
              }
              if (orig.type === 'MORTGAGE_REPAY' && entity.id === orig.fromEntityId) {
-                 entity.mortgagedProperties.push(orig.propertyId);
+               if (!entity.mortgagedProperties.includes(orig.propertyId!)) {
+                 entity.mortgagedProperties.push(orig.propertyId!);
+               }
              }
           }
         });
@@ -382,18 +393,16 @@ export const useGameStore = create<GameStore>()(
     clearUndoEntry: (txId: string): void => {
       set(s => {
         if (!s.session) return;
-        const entry = s.session.undoStack.find(e => e.transactionId === txId);
-        if (!entry) return;
-        // Only clear if expired
-        if (Date.now() >= entry.expiresAt) {
-          s.session.undoStack = s.session.undoStack.filter(
-            e => e.transactionId !== txId
-          );
-        }
+        s.session.undoStack = s.session.undoStack.filter(
+          e => e.transactionId !== txId
+        );
       });
     },
 
     // ─── Property Actions ──────────────────────────────────────────────────
+    // FIX: Removed direct mortgagedProperties mutation.
+    // executeTransaction() is the single source of truth for all state changes,
+    // including mortgage state (applied in its entity loop via transaction.type).
     mortgageProperty: (entityId: string, propertyId: string): void => {
       const state = get();
       if (!state.session) return;
@@ -405,14 +414,7 @@ export const useGameStore = create<GameStore>()(
 
       if (entity.mortgagedProperties.includes(propertyId)) return; // Already mortgaged
 
-      set(s => {
-        if (!s.session) return;
-        const e = s.session.entities.find(en => en.id === entityId);
-        if (e) e.mortgagedProperties.push(propertyId);
-        s.session.updatedAt = Date.now();
-      });
-
-      // Execute mortgage transaction (bank → player)
+      // executeTransaction handles mortgage state update — no direct mutation needed
       get().executeTransaction({
         fromEntityId: bank.id,
         toEntityId: entityId,
@@ -431,16 +433,7 @@ export const useGameStore = create<GameStore>()(
       const property = state.session.editionConfig.properties.find(p => p.id === propertyId);
       if (!bank || !property) return;
 
-      set(s => {
-        if (!s.session) return;
-        const e = s.session.entities.find(en => en.id === entityId);
-        if (e) {
-          e.mortgagedProperties = e.mortgagedProperties.filter(pid => pid !== propertyId);
-        }
-        s.session.updatedAt = Date.now();
-      });
-
-      // Execute unmortgage transaction (player → bank)
+      // executeTransaction handles mortgage state update — no direct mutation needed
       get().executeTransaction({
         fromEntityId: entityId,
         toEntityId: bank.id,
@@ -452,16 +445,16 @@ export const useGameStore = create<GameStore>()(
     },
 
     // ─── House Rules Actions ───────────────────────────────────────────────
-    toggleHouseRule: (key, value): void => {
+    toggleHouseRule: (key: HouseRuleKey, value: boolean | number): void => {
       const state = get();
       if (!state.session) return;
 
-      const oldValue = (state.session.houseRules as any)[key];
+      const oldValue = (state.session.houseRules as unknown as Record<string, unknown>)[key];
       const now = Date.now();
 
       set(s => {
         if (!s.session) return;
-        (s.session.houseRules as any)[key] = value;
+        (s.session.houseRules as unknown as Record<string, unknown>)[key] = value;
         s.session.ruleChangeLog.push({
           timestamp: now,
           ruleKey: key,
@@ -475,12 +468,12 @@ export const useGameStore = create<GameStore>()(
       if (sess) StorageAPI.saveSession(sess);
     },
 
-    addCustomRule: (rule): void => {
+    addCustomRule: (rule: Omit<CustomRule, 'id'>): void => {
       const state = get();
       if (!state.session) return;
       if (state.session.houseRules.customRules.length >= 10) return;
 
-      const newRule = { ...rule, id: uuidv4() };
+      const newRule: CustomRule = { ...rule, id: uuidv4() };
 
       set(s => {
         if (!s.session) return;
@@ -492,7 +485,7 @@ export const useGameStore = create<GameStore>()(
       if (sess) StorageAPI.saveSession(sess);
     },
 
-    updateCustomRule: (id, patch): void => {
+    updateCustomRule: (id: string, patch: Partial<CustomRule>): void => {
       set(s => {
         if (!s.session) return;
         const rule = s.session.houseRules.customRules.find(r => r.id === id);
@@ -503,7 +496,7 @@ export const useGameStore = create<GameStore>()(
       if (sess) StorageAPI.saveSession(sess);
     },
 
-    removeCustomRule: (id): void => {
+    removeCustomRule: (id: string): void => {
       set(s => {
         if (!s.session) return;
         s.session.houseRules.customRules = s.session.houseRules.customRules.filter(
@@ -516,7 +509,7 @@ export const useGameStore = create<GameStore>()(
     },
 
     // ─── Settings ──────────────────────────────────────────────────────────
-    updateAppSettings: (patch): void => {
+    updateAppSettings: (patch: Partial<AppSettings>): void => {
       set(s => {
         Object.assign(s.appSettings, patch);
       });

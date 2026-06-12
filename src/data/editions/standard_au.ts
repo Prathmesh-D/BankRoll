@@ -13,22 +13,22 @@ export const STANDARD_AU: EditionConfig = {
     { id: 'income_pct', label: 'Income Tax (10%)', amount: -1 },
   ],
   colorGroups: [
-    { id: 'brown',      label: 'Brown',      hex: '#8B4513', propertyIds: ['todd_st', 'smith_st'] },
+    { id: 'brown',      label: 'Brown',      hex: '#955436', propertyIds: ['todd_st', 'smith_st'] },
     { id: 'light_blue', label: 'Light Blue', hex: '#87CEEB', propertyIds: ['salamanca_pl', 'davey_st', 'macquarie_st'] },
     { id: 'pink',       label: 'Pink',       hex: '#FF69B4', propertyIds: ['william_st', 'barrack_st', 'hay_st'] },
     { id: 'orange',     label: 'Orange',     hex: '#FFA500', propertyIds: ['north_terrace', 'victoria_square', 'rundle_mall'] },
     { id: 'red',        label: 'Red',        hex: '#DC143C', propertyIds: ['stanley_st', 'petries_bight', 'wickham_terrace'] },
     { id: 'yellow',     label: 'Yellow',     hex: '#FFD700', propertyIds: ['collins_st', 'elizabeth_st', 'bourke_st'] },
     { id: 'green',      label: 'Green',      hex: '#228B22', propertyIds: ['castlereagh_st', 'george_st', 'pitt_st'] },
-    { id: 'dark_blue',  label: 'Dark Blue',  hex: '#00008B', propertyIds: ['flinders_way', 'kings_ave'] },
-    { id: 'station',    label: 'Stations',   hex: '#1A1A1A', propertyIds: ['perth_station', 'adelaide_station', 'flinders_st_station', 'sydney_station'] },
+    { id: 'dark_blue',  label: 'Dark Blue',  hex: '#0072BB', propertyIds: ['flinders_way', 'kings_ave'] },
+    { id: 'station',    label: 'Stations',   hex: '#6E6E6E', propertyIds: ['perth_station', 'adelaide_station', 'flinders_st_station', 'sydney_station'] },
     { id: 'utility',    label: 'Utilities',  hex: '#C0C0C0', propertyIds: ['australia_post', 'telstra'] },
   ],
   properties: [
     // ── BROWN ─────────────────────────────────────────────────────────────────
     {
       id: 'todd_st', name: 'Todd Street',
-      colorGroup: 'brown', colorHex: '#8B4513',
+      colorGroup: 'brown', colorHex: '#955436',
       purchasePrice: 60, mortgageValue: 30, unmortgageCost: 33,
       houseCost: 50, hotelCost: 50, isStation: false, isUtility: false,
       rentTiers: [
@@ -39,7 +39,7 @@ export const STANDARD_AU: EditionConfig = {
     },
     {
       id: 'smith_st', name: 'Smith Street',
-      colorGroup: 'brown', colorHex: '#8B4513',
+      colorGroup: 'brown', colorHex: '#955436',
       purchasePrice: 60, mortgageValue: 30, unmortgageCost: 33,
       houseCost: 50, hotelCost: 50, isStation: false, isUtility: false,
       rentTiers: [
@@ -255,7 +255,7 @@ export const STANDARD_AU: EditionConfig = {
     // ── DARK BLUE ─────────────────────────────────────────────────────────────
     {
       id: 'flinders_way', name: 'Flinders Way',
-      colorGroup: 'dark_blue', colorHex: '#00008B',
+      colorGroup: 'dark_blue', colorHex: '#0072BB',
       purchasePrice: 350, mortgageValue: 175, unmortgageCost: 193,
       houseCost: 200, hotelCost: 200, isStation: false, isUtility: false,
       rentTiers: [
@@ -266,7 +266,7 @@ export const STANDARD_AU: EditionConfig = {
     },
     {
       id: 'kings_ave', name: 'Kings Avenue',
-      colorGroup: 'dark_blue', colorHex: '#00008B',
+      colorGroup: 'dark_blue', colorHex: '#0072BB',
       purchasePrice: 400, mortgageValue: 200, unmortgageCost: 220,
       houseCost: 200, hotelCost: 200, isStation: false, isUtility: false,
       rentTiers: [
@@ -278,7 +278,7 @@ export const STANDARD_AU: EditionConfig = {
     // ── STATIONS ──────────────────────────────────────────────────────────────
     {
       id: 'perth_station', name: 'Perth Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -290,7 +290,7 @@ export const STANDARD_AU: EditionConfig = {
     },
     {
       id: 'adelaide_station', name: 'Adelaide Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -302,7 +302,7 @@ export const STANDARD_AU: EditionConfig = {
     },
     {
       id: 'flinders_st_station', name: 'Flinders St. Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -314,7 +314,7 @@ export const STANDARD_AU: EditionConfig = {
     },
     {
       id: 'sydney_station', name: 'Sydney Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 200, mortgageValue: 100, unmortgageCost: 110,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [

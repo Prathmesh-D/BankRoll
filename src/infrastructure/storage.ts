@@ -12,6 +12,7 @@ const KEYS = {
   ACTIVE_SESSION_ID: 'active_session_id',
   SESSION_IDS: 'session_ids',
   SESSION_CODES: 'session_codes',
+  SESSION_SUMMARIES: 'session_summaries', // lightweight cache
   APP_SETTINGS: 'app_settings',
   CALCULATOR_HISTORY: 'calculator_history',
   sessionKey: (id: string) => `session:${id}`,
@@ -45,6 +46,27 @@ export function saveSession(session: GameSession): void {
     ids.push(session.id);
     setJSON(KEYS.SESSION_IDS, ids);
   }
+  // Update lightweight summary cache incrementally
+  const summaries = getSessionSummaries();
+  const summary: SessionSummary = {
+    id: session.id,
+    sessionCode: session.sessionCode,
+    edition: session.edition as any,
+    playerNames: session.entities
+      .filter(e => e.type === 'player')
+      .map(e => e.name),
+    transactionCount: session.transactions.filter(t => !t.isReversed).length,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    status: session.status,
+  };
+  const idx = summaries.findIndex(s => s.id === session.id);
+  if (idx >= 0) {
+    summaries[idx] = summary;
+  } else {
+    summaries.push(summary);
+  }
+  setJSON(KEYS.SESSION_SUMMARIES, summaries);
 }
 
 export function deleteSession(id: string): void {
@@ -58,6 +80,9 @@ export function deleteSession(id: string): void {
     delete codes[entry[0]];
     setJSON(KEYS.SESSION_CODES, codes);
   }
+  // Remove from summary cache
+  const summaries = getSessionSummaries().filter(s => s.id !== id);
+  setJSON(KEYS.SESSION_SUMMARIES, summaries);
 }
 
 export function getSessionIds(): string[] {
@@ -71,19 +96,9 @@ export function getAllSessions(): GameSession[] {
     .filter((s): s is GameSession => s !== null);
 }
 
+/** Returns lightweight summaries from the cache — no full session deserialization needed. */
 export function getSessionSummaries(): SessionSummary[] {
-  return getAllSessions().map(session => ({
-    id: session.id,
-    sessionCode: session.sessionCode,
-    edition: session.edition as any,
-    playerNames: session.entities
-      .filter(e => e.type === 'player')
-      .map(e => e.name),
-    transactionCount: session.transactions.filter(t => !t.isReversed).length,
-    createdAt: session.createdAt,
-    updatedAt: session.updatedAt,
-    status: session.status,
-  }));
+  return getJSON<SessionSummary[]>(KEYS.SESSION_SUMMARIES) ?? [];
 }
 
 // ─── Session Code Operations ──────────────────────────────────────────────────

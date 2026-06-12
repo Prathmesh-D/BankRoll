@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  FlatList,
   SafeAreaView,
   Image,
 } from 'react-native';
@@ -18,6 +19,7 @@ interface Props {
   transactions: Transaction[];
   entities: Entity[];
   currency: CurrencyConfig;
+  undoStack: Array<{ transactionId: string; expiresAt: number }>;
   onUndo: (txId: string) => void;
   onClose: () => void;
 }
@@ -27,23 +29,27 @@ const formatRetroBalance = (amount: number, currency: CurrencyConfig) => {
   return `${currency.symbol}${abs}`;
 };
 
-export default function TransactionLog({
-  transactions,
-  entities,
-  currency,
-  onUndo,
-  onClose,
-}: Props) {
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const sortedTransactions = [...transactions].sort((a, b) => b.timestamp - a.timestamp);
-  const displayTransactions = sortedTransactions.filter(tx => tx.type !== 'REVERSAL');
-
+const TransactionRow = React.memo(({ 
+  tx, 
+  index, 
+  from, 
+  to, 
+  currency, 
+  onUndo, 
+  canUndo,
+  totalCount, 
+  now 
+}: {
+  tx: Transaction;
+  index: number;
+  from?: Entity;
+  to?: Entity;
+  currency: CurrencyConfig;
+  onUndo: (id: string) => void;
+  canUndo: boolean;
+  totalCount: number;
+  now: number;
+}) => {
   const formatTimeAgo = (timestamp: number) => {
     const diff = Math.floor((now - timestamp) / 1000);
     if (diff < 60) return 'Just now';
@@ -51,7 +57,119 @@ export default function TransactionLog({
     return `${Math.floor(diff / 3600)} hr ago`;
   };
 
-  const getEntity = (id: string) => entities.find(e => e.id === id);
+  return (
+    <View style={styles.txWrapper}>
+      <View style={[styles.card, tx.isReversed && styles.cardReversed]}>
+        <View style={[styles.colorBarLeft, { backgroundColor: from?.color || Colors.ink }]} />
+        <View style={[styles.colorBarRight, { backgroundColor: to?.color || Colors.ink }]} />
+        
+        <View style={styles.cardHeader}>
+          <Text style={styles.timeText}>{formatTimeAgo(tx.timestamp)} • #{totalCount - index}</Text>
+          <View style={styles.headerRightControls}>
+            <View style={styles.typeBadge}>
+              <Text style={styles.typeText}>{tx.type}</Text>
+            </View>
+            {!tx.isReversed && canUndo && (
+              <TouchableOpacity style={styles.revertBtn} onPress={() => onUndo(tx.id)}>
+                <Text style={styles.revertBtnText}>UNDO</Text>
+              </TouchableOpacity>
+            )}
+            {!tx.isReversed && !canUndo && (
+              <View style={styles.finalBadge}>
+                <Text style={styles.finalBadgeText}>FINAL</Text>
+              </View>
+            )}
+            {tx.isReversed && (
+              <Text style={styles.revertedBadge}>REVERTED</Text>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.grid}>
+          {/* From */}
+          <View style={styles.entityCol}>
+            <View style={[styles.avatarBox, { backgroundColor: from?.color ? from.color + '1A' : Colors.ink + '1A' }]}>
+              {from?.avatar && AVATAR_IMAGES[from.avatar] ? (
+                <Image source={AVATAR_IMAGES[from.avatar]} style={styles.avatarImage} resizeMode="contain" />
+              ) : (
+                <Text style={styles.avatar}>{from?.avatar}</Text>
+              )}
+            </View>
+            <Text style={styles.entityName} numberOfLines={1}>{from?.name}</Text>
+          </View>
+
+          {/* Amount */}
+          <View style={styles.amountCol}>
+            <Text style={styles.arrowIcon}>→</Text>
+            <Text style={styles.amount}>{formatRetroBalance(tx.amount, currency)}</Text>
+          </View>
+
+          {/* To */}
+          <View style={styles.entityCol}>
+            <View style={[styles.avatarBox, { backgroundColor: to?.color ? to.color + '1A' : Colors.ink + '1A' }]}>
+              {to?.avatar && AVATAR_IMAGES[to.avatar] ? (
+                <Image source={AVATAR_IMAGES[to.avatar]} style={styles.avatarImage} resizeMode="contain" />
+              ) : (
+                <Text style={styles.avatar}>{to?.avatar}</Text>
+              )}
+            </View>
+            <Text style={styles.entityName} numberOfLines={1}>{to?.name}</Text>
+          </View>
+        </View>
+
+        {tx.label && (
+          <Text style={styles.txLabel}>{tx.label}</Text>
+        )}
+      </View>
+    </View>
+  );
+});
+
+export default function TransactionLog({
+  transactions,
+  entities,
+  currency,
+  undoStack,
+  onUndo,
+  onClose,
+}: Props) {
+  // Update 'now' every second so time-ago labels and canUndo check stay fresh
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const sortedTransactions = React.useMemo(() => {
+    return [...transactions].sort((a, b) => b.timestamp - a.timestamp);
+  }, [transactions]);
+
+  const displayTransactions = React.useMemo(() => {
+    return sortedTransactions.filter(tx => tx.type !== 'REVERSAL');
+  }, [sortedTransactions]);
+
+  const getEntity = React.useCallback((id: string) => entities.find(e => e.id === id), [entities]);
+
+  const renderItem = React.useCallback(({ item: tx, index }: { item: Transaction, index: number }) => {
+    const from = getEntity(tx.fromEntityId);
+    const to = getEntity(tx.toEntityId);
+    // REVERT is available only while the undo window is open
+    const undoEntry = undoStack.find(e => e.transactionId === tx.id);
+    const canUndo = !tx.isReversed && !!undoEntry && now < undoEntry.expiresAt;
+    return (
+      <TransactionRow
+        tx={tx}
+        index={index}
+        from={from}
+        to={to}
+        currency={currency}
+        onUndo={onUndo}
+        canUndo={canUndo}
+        totalCount={displayTransactions.length}
+        now={now}
+      />
+    );
+  }, [getEntity, currency, onUndo, undoStack, displayTransactions.length, now]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -72,82 +190,22 @@ export default function TransactionLog({
       </View>
 
       {/* Content */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.list}>
-          {displayTransactions.map((tx, index) => {
-            const from = getEntity(tx.fromEntityId);
-            const to = getEntity(tx.toEntityId);
-
-            return (
-              <View key={tx.id} style={styles.txWrapper}>
-                <View style={[styles.card, tx.isReversed && styles.cardReversed]}>
-                  <View style={[styles.colorBarLeft, { backgroundColor: from?.color || Colors.ink }]} />
-                  <View style={[styles.colorBarRight, { backgroundColor: to?.color || Colors.ink }]} />
-                  
-                  <View style={styles.cardHeader}>
-                    <Text style={styles.timeText}>{formatTimeAgo(tx.timestamp)} • #{displayTransactions.length - index}</Text>
-                    <View style={styles.headerRightControls}>
-                      <View style={styles.typeBadge}>
-                        <Text style={styles.typeText}>{tx.type}</Text>
-                      </View>
-                      {!tx.isReversed && (
-                        <TouchableOpacity style={styles.revertBtn} onPress={() => onUndo(tx.id)}>
-                          <Text style={styles.revertBtnText}>REVERT</Text>
-                        </TouchableOpacity>
-                      )}
-                      {tx.isReversed && (
-                        <Text style={styles.revertedBadge}>REVERTED</Text>
-                      )}
-                    </View>
-                  </View>
-
-                  <View style={styles.grid}>
-                    {/* From */}
-                    <View style={styles.entityCol}>
-                      <View style={[styles.avatarBox, { backgroundColor: from?.color ? from.color + '1A' : Colors.ink + '1A' }]}>
-                        {from?.avatar && AVATAR_IMAGES[from.avatar] ? (
-                          <Image source={AVATAR_IMAGES[from.avatar]} style={styles.avatarImage} resizeMode="contain" />
-                        ) : (
-                          <Text style={styles.avatar}>{from?.avatar}</Text>
-                        )}
-                      </View>
-                      <Text style={styles.entityName} numberOfLines={1}>{from?.name}</Text>
-                    </View>
-
-                    {/* Amount */}
-                    <View style={styles.amountCol}>
-                      <Text style={styles.arrowIcon}>→</Text>
-                      <Text style={styles.amount}>{formatRetroBalance(tx.amount, currency)}</Text>
-                    </View>
-
-                    {/* To */}
-                    <View style={styles.entityCol}>
-                      <View style={[styles.avatarBox, { backgroundColor: to?.color ? to.color + '1A' : Colors.ink + '1A' }]}>
-                        {to?.avatar && AVATAR_IMAGES[to.avatar] ? (
-                          <Image source={AVATAR_IMAGES[to.avatar]} style={styles.avatarImage} resizeMode="contain" />
-                        ) : (
-                          <Text style={styles.avatar}>{to?.avatar}</Text>
-                        )}
-                      </View>
-                      <Text style={styles.entityName} numberOfLines={1}>{to?.name}</Text>
-                    </View>
-                  </View>
-
-                  {tx.label && (
-                    <Text style={styles.txLabel}>{tx.label}</Text>
-                  )}
-                </View>
-              </View>
-            );
-          })}
-
-          {displayTransactions.length === 0 && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No transactions yet</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
+      <FlatList
+        data={displayTransactions}
+        keyExtractor={tx => tx.id}
+        style={styles.content}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No transactions yet</Text>
+          </View>
+        }
+        renderItem={renderItem}
+      />
     </SafeAreaView>
   );
 }
@@ -165,7 +223,7 @@ const styles = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 24,
     borderBottomWidth: 4,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    borderBottomColor: Colors.ink,
     backgroundColor: Colors.cream,
     zIndex: 10,
   },
@@ -295,6 +353,19 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: Typography.display,
     color: Colors.white,
+    letterSpacing: 1,
+  },
+  finalBadge: {
+    backgroundColor: Colors.creamDark,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.2)',
+  },
+  finalBadgeText: {
+    fontSize: 10,
+    fontFamily: Typography.display,
+    color: 'rgba(0,0,0,0.4)',
     letterSpacing: 1,
   },
   revertedBadge: {

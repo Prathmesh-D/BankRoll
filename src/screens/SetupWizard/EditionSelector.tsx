@@ -12,8 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { SetupStackParamList } from '../../navigation/SetupNavigator';
 import { playSound } from '../../utils/SoundManager';
 import { EDITION_LIST } from '../../data/editions';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../theme/tokens';
-import { EDITIONS } from '../../data/editions';
+import { Colors, Typography, Spacing, Shadows } from '../../theme/tokens';
 import { AnimatedPressable } from '../../components/AnimatedPressable';
 import { FloatingView } from '../../components/FloatingView';
 
@@ -23,17 +22,15 @@ export default function EditionSelector() {
   const navigation = useNavigation<Nav>();
   const [selected, setSelected] = useState<string>('standard_uk');
 
-  const selectedEdition = EDITION_LIST.find(e => e.id === selected);
-
   return (
     <SafeAreaView style={styles.safe}>
       {/* Top Bar */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 48 }}>
+      <View style={styles.topBar}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()} 
-          style={{ paddingHorizontal: 12, paddingVertical: 8, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, ...Shadows.btn }}
+          style={styles.backBtn}
         >
-          <Text style={{ fontFamily: Typography.display, fontSize: 14, color: Colors.ink, letterSpacing: 1 }}>BACK</Text>
+          <Text style={styles.backBtnText}>BACK</Text>
         </TouchableOpacity>
 
         {/* Progress */}
@@ -43,7 +40,7 @@ export default function EditionSelector() {
           <View style={styles.progressDot} />
           <View style={styles.progressDot} />
         </View>
-        <View style={{ width: 60 }} />
+        <View style={styles.topBarSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -175,4 +172,8 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 24, fontFamily: Typography.display, color: Colors.ink, letterSpacing: 2,
   },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 48 },
+  backBtn: { paddingHorizontal: 12, paddingVertical: 8, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, ...Shadows.btn },
+  backBtnText: { fontFamily: Typography.display, fontSize: 14, color: Colors.ink, letterSpacing: 1 },
+  topBarSpacer: { width: 60 },
 });

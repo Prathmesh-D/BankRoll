@@ -43,7 +43,7 @@ const formatRetroBalance = (amount: number, currency: CurrencyConfig) => {
   return `${sign}${currency.symbol}${abs}`;
 };
 
-export default function PlayerCard({
+export default React.memo(function PlayerCard({
   entity,
   currency,
   onSalaryPress,
@@ -63,6 +63,8 @@ export default function PlayerCard({
     .enabled(entity.isActive)
     .onBegin((event) => {
       scale.value = withSpring(1.03, Springs.snappy);
+    })
+    .onStart((event) => {
       if (isDragging && cursorX && cursorY) {
         isDragging.value = true;
         cursorX.value = event.absoluteX;
@@ -175,8 +177,7 @@ export default function PlayerCard({
             {/* Name */}
             <Text style={styles.name} numberOfLines={1}>{entity.name}</Text>
 
-            {/* Optional Title (hardcoded for aesthetic matching the prototype, or we leave empty) */}
-            <Text style={styles.title}>Player</Text>
+            <View style={styles.divider} />
 
             {/* Balance */}
             <TouchableOpacity onPress={() => onDoubleTapBalance?.(entity)} activeOpacity={0.9} style={styles.balanceContainer}>
@@ -209,7 +210,14 @@ export default function PlayerCard({
       </Animated.View>
     </GestureDetector>
   );
-}
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.entity.balance === nextProps.entity.balance &&
+    prevProps.entity.isActive === nextProps.entity.isActive &&
+    prevProps.entity.mortgagedProperties?.length === nextProps.entity.mortgagedProperties?.length &&
+    prevProps.currency === nextProps.currency
+  );
+});
 
 const styles = StyleSheet.create({
   cardContainer: {
@@ -305,19 +313,26 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   name: {
-    fontSize: 10,
-    fontFamily: Typography.display, // Using Bebas equivalent
+    fontSize: 19,
+    fontFamily: Typography.display,
     textTransform: 'uppercase',
     letterSpacing: 2,
-    color: 'rgba(0,0,0,0.4)',
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 16,
-    fontFamily: Typography.bodySemibold,
-    fontStyle: 'italic',
     color: Colors.ink,
+    backgroundColor: Colors.gold,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 2,
+    borderColor: Colors.ink,
     marginBottom: 8,
+    textAlign: 'center',
+    alignSelf: 'center',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.ink,
+    width: '60%',
+    alignSelf: 'center',
+    opacity: 0.2, // Subtle line
   },
   balanceContainer: {
     marginTop: 'auto',

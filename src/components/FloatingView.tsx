@@ -1,5 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, StyleProp, ViewStyle } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleProp, ViewStyle } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  cancelAnimation,
+} from 'react-native-reanimated';
 
 interface FloatingViewProps {
   children: React.ReactNode;
@@ -8,37 +16,39 @@ interface FloatingViewProps {
   duration?: number;
 }
 
-export function FloatingView({ 
-  children, 
-  style, 
-  amplitude = 4, 
-  duration = 1500 
+/**
+ * FloatingView — migrated from Animated (JS thread) to Reanimated (UI thread).
+ * The looping float animation now runs natively.
+ */
+export function FloatingView({
+  children,
+  style,
+  amplitude = 4,
+  duration = 1500,
 }: FloatingViewProps) {
-  const floatingAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatingAnim, {
-          toValue: -amplitude,
-          duration: duration / 2,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatingAnim, {
-          toValue: 0,
-          duration: duration / 2,
-          useNativeDriver: true,
-        }),
-      ])
+    translateY.value = withRepeat(
+      withSequence(
+        withTiming(-amplitude, { duration: duration / 2 }),
+        withTiming(0, { duration: duration / 2 })
+      ),
+      -1, // infinite
+      false
     );
-    
-    animation.start();
 
-    return () => animation.stop();
-  }, [floatingAnim, amplitude, duration]);
+    return () => {
+      cancelAnimation(translateY);
+    };
+  }, [translateY, amplitude, duration]);
 
   return (
-    <Animated.View style={[style, { transform: [{ translateY: floatingAnim }] }]}>
+    <Animated.View style={[style, animatedStyle]}>
       {children}
     </Animated.View>
   );

@@ -1,5 +1,10 @@
-import React, { useRef } from 'react';
-import { Animated, Pressable, ViewStyle, StyleProp } from 'react-native';
+import React from 'react';
+import { Pressable, ViewStyle, StyleProp } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 
 interface AnimatedPressableProps {
   onPress?: () => void;
@@ -10,33 +15,40 @@ interface AnimatedPressableProps {
   disabled?: boolean;
 }
 
-export function AnimatedPressable({ 
-  onPress, 
-  style, 
+/**
+ * AnimatedPressable — migrated from Animated (JS thread) to Reanimated (UI thread).
+ * This eliminates dropped frames during drag operations on the Dashboard,
+ * since the scale animation now runs natively without JS involvement.
+ */
+export function AnimatedPressable({
+  onPress,
+  style,
   containerStyle,
-  children, 
+  children,
   activeScale = 0.96,
   disabled = false,
 }: AnimatedPressableProps) {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const handlePressIn = () => {
     if (disabled) return;
-    Animated.spring(scale, {
-      toValue: activeScale,
-      useNativeDriver: true,
-      speed: 24,
-      bounciness: 10,
-    }).start();
+    scale.value = withSpring(activeScale, {
+      damping: 15,
+      stiffness: 400,
+      mass: 0.5,
+    });
   };
 
   const handlePressOut = () => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 24,
-      bounciness: 10,
-    }).start();
+    scale.value = withSpring(1, {
+      damping: 15,
+      stiffness: 400,
+      mass: 0.5,
+    });
   };
 
   return (
@@ -47,7 +59,7 @@ export function AnimatedPressable({
       disabled={disabled}
       style={containerStyle}
     >
-      <Animated.View style={[style, { transform: [{ scale }] }]}>
+      <Animated.View style={[style, animatedStyle]}>
         {children}
       </Animated.View>
     </Pressable>

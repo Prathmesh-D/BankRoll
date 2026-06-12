@@ -15,7 +15,7 @@
 
 <div align="center">
     <a href="https://github.com/Prathmesh-D/BankRoll/releases/latest">
-        <img src="https://img.shields.io/badge/version-v1.0.3-1f201f?style=for-the-badge&labelColor=f9f8ee"/>
+        <img src="https://img.shields.io/badge/version-v1.0.4-1f201f?style=for-the-badge&labelColor=f9f8ee"/>
     </a>
 </div>
 <br>
@@ -32,9 +32,9 @@
 ### App Preview
 
 <div align="center">
-  <img src="./assets/images/readme/Homepage.png" alt="BankRoll Homepage" width="31%" style="border-radius: 6px; overflow: hidden; border: 2px solid #1A1412; box-shadow: 4px 4px 0px #1A1412; margin: 1%;" />
-  <img src="./assets/images/readme/Dashboard.png" alt="BankRoll Dashboard" width="31%" style="border-radius: 6px; overflow: hidden; border: 2px solid #1A1412; box-shadow: 4px 4px 0px #1A1412; margin: 1%;" />
-  <img src="./assets/images/readme/FinishScreen.png" alt="BankRoll Finish Screen" width="31%" style="border-radius: 6px; overflow: hidden; border: 2px solid #1A1412; box-shadow: 4px 4px 0px #1A1412; margin: 1%;" />
+  <img src="./assets/images/readme/Homepage.png" alt="BankRoll Homepage" width="31%" style="border-radius: 16px; overflow: hidden; border: 2px solid #1A1412; box-shadow: 4px 4px 0px #1A1412; margin: 1%;" />
+  <img src="./assets/images/readme/Dashboard.png" alt="BankRoll Dashboard" width="31%" style="border-radius: 16px; overflow: hidden; border: 2px solid #1A1412; box-shadow: 4px 4px 0px #1A1412; margin: 1%;" />
+  <img src="./assets/images/readme/FinishScreen.png" alt="BankRoll Finish Screen" width="31%" style="border-radius: 16px; overflow: hidden; border: 2px solid #1A1412; box-shadow: 4px 4px 0px #1A1412; margin: 1%;" />
 </div>
 
 <br/>
@@ -135,7 +135,7 @@ Customizable house rules including No Bankruptcy (-100 limit) and Infinite Bank 
     </td>
     <td valign="top" style="padding-left: 12px;">
       <strong>Download the App</strong><br><br>
-      Navigate to the <a href="https://github.com/Prathmesh-D/BankRoll/releases/latest">Releases</a> section on GitHub and download <code>BankRoll-v1.0.2.apk</code>.<br>
+      Navigate to the <a href="https://github.com/Prathmesh-D/BankRoll/releases/latest">Releases</a> section on GitHub and download <code>BankRoll-v1.0.4.apk</code>.<br>
       Install the APK on your Android device (ensure "Install from Unknown Sources" is enabled).<br><br>
     </td>
   </tr>

@@ -15,22 +15,22 @@ export const STANDARD_IN: EditionConfig = {
     { id: 'income_pct', label: 'Income Tax (10%)', amount: -1 },
   ],
   colorGroups: [
-    { id: 'brown',      label: 'Brown',      hex: '#8B4513', propertyIds: ['marine_lines', 'byculla'] },
+    { id: 'brown',      label: 'Brown',      hex: '#955436', propertyIds: ['marine_lines', 'byculla'] },
     { id: 'light_blue', label: 'Light Blue', hex: '#87CEEB', propertyIds: ['grant_road', 'opera_house', 'churchgate'] },
     { id: 'pink',       label: 'Pink',       hex: '#FF69B4', propertyIds: ['andheri', 'juhu', 'versova'] },
     { id: 'orange',     label: 'Orange',     hex: '#FFA500', propertyIds: ['bandra', 'khar', 'santacruz'] },
     { id: 'red',        label: 'Red',        hex: '#DC143C', propertyIds: ['worli', 'lower_parel', 'prabhadevi'] },
     { id: 'yellow',     label: 'Yellow',     hex: '#FFD700', propertyIds: ['nariman_point', 'fort', 'colaba'] },
     { id: 'green',      label: 'Green',      hex: '#228B22', propertyIds: ['cuffe_parade', 'backbay', 'malabar_hill'] },
-    { id: 'dark_blue',  label: 'Dark Blue',  hex: '#00008B', propertyIds: ['altamount_road', 'pedder_road'] },
-    { id: 'station',    label: 'Stations',   hex: '#1A1A1A', propertyIds: ['cst', 'dadar', 'thane', 'kurla'] },
+    { id: 'dark_blue',  label: 'Dark Blue',  hex: '#0072BB', propertyIds: ['altamount_road', 'pedder_road'] },
+    { id: 'station',    label: 'Stations',   hex: '#6E6E6E', propertyIds: ['cst', 'dadar', 'thane', 'kurla'] },
     { id: 'utility',    label: 'Utilities',  hex: '#C0C0C0', propertyIds: ['bses', 'bmc'] },
   ],
   properties: [
     // ── BROWN ─────────────────────────────────────────────────────────────────
     {
       id: 'marine_lines', name: 'Marine Lines',
-      colorGroup: 'brown', colorHex: '#8B4513',
+      colorGroup: 'brown', colorHex: '#955436',
       purchasePrice: 600_000, mortgageValue: 300_000, unmortgageCost: 330_000,
       houseCost: 500_000, hotelCost: 500_000, isStation: false, isUtility: false,
       rentTiers: [
@@ -41,7 +41,7 @@ export const STANDARD_IN: EditionConfig = {
     },
     {
       id: 'byculla', name: 'Byculla',
-      colorGroup: 'brown', colorHex: '#8B4513',
+      colorGroup: 'brown', colorHex: '#955436',
       purchasePrice: 600_000, mortgageValue: 300_000, unmortgageCost: 330_000,
       houseCost: 500_000, hotelCost: 500_000, isStation: false, isUtility: false,
       rentTiers: [
@@ -257,7 +257,7 @@ export const STANDARD_IN: EditionConfig = {
     // ── DARK BLUE ─────────────────────────────────────────────────────────────
     {
       id: 'altamount_road', name: 'Altamount Road',
-      colorGroup: 'dark_blue', colorHex: '#00008B',
+      colorGroup: 'dark_blue', colorHex: '#0072BB',
       purchasePrice: 3_500_000, mortgageValue: 1_750_000, unmortgageCost: 1_925_000,
       houseCost: 2_000_000, hotelCost: 2_000_000, isStation: false, isUtility: false,
       rentTiers: [
@@ -268,7 +268,7 @@ export const STANDARD_IN: EditionConfig = {
     },
     {
       id: 'pedder_road', name: 'Pedder Road',
-      colorGroup: 'dark_blue', colorHex: '#00008B',
+      colorGroup: 'dark_blue', colorHex: '#0072BB',
       purchasePrice: 4_000_000, mortgageValue: 2_000_000, unmortgageCost: 2_200_000,
       houseCost: 2_000_000, hotelCost: 2_000_000, isStation: false, isUtility: false,
       rentTiers: [
@@ -280,7 +280,7 @@ export const STANDARD_IN: EditionConfig = {
     // ── STATIONS ──────────────────────────────────────────────────────────────
     {
       id: 'cst', name: 'CST (Chhatrapati Shivaji Terminus)',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 2_000_000, mortgageValue: 1_000_000, unmortgageCost: 1_100_000,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -292,7 +292,7 @@ export const STANDARD_IN: EditionConfig = {
     },
     {
       id: 'dadar', name: 'Dadar Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 2_000_000, mortgageValue: 1_000_000, unmortgageCost: 1_100_000,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -304,7 +304,7 @@ export const STANDARD_IN: EditionConfig = {
     },
     {
       id: 'thane', name: 'Thane Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 2_000_000, mortgageValue: 1_000_000, unmortgageCost: 1_100_000,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
@@ -316,7 +316,7 @@ export const STANDARD_IN: EditionConfig = {
     },
     {
       id: 'kurla', name: 'Kurla Station',
-      colorGroup: 'station', colorHex: '#1A1A1A',
+      colorGroup: 'station', colorHex: '#6E6E6E',
       purchasePrice: 2_000_000, mortgageValue: 1_000_000, unmortgageCost: 1_100_000,
       houseCost: 0, hotelCost: 0, isStation: true, isUtility: false,
       rentTiers: [
