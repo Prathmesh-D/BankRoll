@@ -42,7 +42,8 @@ export function getPropertiesByColorGroup(
 /**
  * Checks if a property is mortgaged by a specific entity.
  */
-export function isMortgaged(propertyId: PropertyId, entity: Entity): boolean {
+export function isMortgaged(propertyId: PropertyId, entity: Entity | null): boolean {
+  if (!entity) return false;
   return entity.mortgagedProperties.includes(propertyId);
 }
 

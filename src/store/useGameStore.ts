@@ -246,7 +246,7 @@ export const useGameStore = create<GameStore>()(
       const adjustedTx = applyHouseRules(tx, state.session.houseRules, state.session);
 
       const txId = uuidv4();
-      const expiresAt = now + (state.session.settings.undoWindowMs ?? UNDO_WINDOW_MS);
+      const expiresAt = Infinity; // No longer time-based
 
       const transaction: Transaction = {
         id: txId,
@@ -289,11 +289,10 @@ export const useGameStore = create<GameStore>()(
         });
         s.session.transactions.push(transaction);
 
-        // Prune expired undo entries lazily before adding the new one
-        s.session.undoStack = s.session.undoStack.filter(
-          e => Date.now() < e.expiresAt
-        );
-        s.session.undoStack.push({ transactionId: txId, expiresAt });
+        s.session.undoStack.push({ transactionId: txId, expiresAt: Infinity });
+        if (s.session.undoStack.length > 5) {
+          s.session.undoStack = s.session.undoStack.slice(-5);
+        }
         s.session.updatedAt = now;
       });
 

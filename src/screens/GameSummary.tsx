@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   statIcon: { fontSize: 24 },
   statValue: { fontSize: 24, fontFamily: Typography.display, color: Colors.maroon },
-  statLabel: { fontSize: 8, fontFamily: Typography.display, color: Colors.ghost, letterSpacing: 2 },
+  statLabel: { fontSize: 8, fontFamily: Typography.body, color: Colors.ghost, letterSpacing: 2 },
   // ── Session Code Card ─────────────────────────────────────────────────
   codeCard: {
     backgroundColor: Colors.ink,

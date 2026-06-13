@@ -85,40 +85,66 @@ const TransactionRow = React.memo(({
           </View>
         </View>
 
+        <View style={styles.amountHeader}>
+          <Text style={styles.amount}>{formatRetroBalance(tx.amount, currency)}</Text>
+        </View>
+
         <View style={styles.grid}>
           {/* From */}
           <View style={styles.entityCol}>
-            <View style={[styles.avatarBox, { backgroundColor: from?.color ? from.color + '1A' : Colors.ink + '1A' }]}>
-              {from?.avatar && AVATAR_IMAGES[from.avatar] ? (
-                <Image source={AVATAR_IMAGES[from.avatar]} style={styles.avatarImage} resizeMode="contain" />
-              ) : (
-                <Text style={styles.avatar}>{from?.avatar}</Text>
-              )}
-            </View>
-            <Text style={styles.entityName} numberOfLines={1}>{from?.name}</Text>
+            {from?.type === 'bank' && (
+              <View style={[styles.avatarBox, { backgroundColor: from?.color ? from.color + '1A' : Colors.ink + '1A' }]}>
+                {from?.avatar && AVATAR_IMAGES[from.avatar] ? (
+                  <Image source={AVATAR_IMAGES[from.avatar]} style={styles.avatarImage} resizeMode="contain" />
+                ) : (
+                  <Text style={styles.avatar}>{from?.avatar}</Text>
+                )}
+              </View>
+            )}
+            {from?.type !== 'bank' && (
+              <Text style={styles.entityName} numberOfLines={1}>{from?.name}</Text>
+            )}
           </View>
 
-          {/* Amount */}
-          <View style={styles.amountCol}>
+          {/* Arrow */}
+          <View style={styles.arrowCol}>
             <Text style={styles.arrowIcon}>→</Text>
-            <Text style={styles.amount}>{formatRetroBalance(tx.amount, currency)}</Text>
           </View>
 
           {/* To */}
           <View style={styles.entityCol}>
-            <View style={[styles.avatarBox, { backgroundColor: to?.color ? to.color + '1A' : Colors.ink + '1A' }]}>
-              {to?.avatar && AVATAR_IMAGES[to.avatar] ? (
-                <Image source={AVATAR_IMAGES[to.avatar]} style={styles.avatarImage} resizeMode="contain" />
-              ) : (
-                <Text style={styles.avatar}>{to?.avatar}</Text>
-              )}
-            </View>
-            <Text style={styles.entityName} numberOfLines={1}>{to?.name}</Text>
+            {to?.type === 'bank' && (
+              <View style={[styles.avatarBox, { backgroundColor: to?.color ? to.color + '1A' : Colors.ink + '1A' }]}>
+                {to?.avatar && AVATAR_IMAGES[to.avatar] ? (
+                  <Image source={AVATAR_IMAGES[to.avatar]} style={styles.avatarImage} resizeMode="contain" />
+                ) : (
+                  <Text style={styles.avatar}>{to?.avatar}</Text>
+                )}
+              </View>
+            )}
+            {to?.type !== 'bank' && (
+              <Text style={styles.entityName} numberOfLines={1}>{to?.name}</Text>
+            )}
           </View>
         </View>
 
         {tx.label && (
-          <Text style={styles.txLabel}>{tx.label}</Text>
+          <Text style={styles.txLabel}>
+            {(() => {
+              const match = tx.label.match(/^(.*?(?:Unmortgage |Remove Mortgage |Mortgage |mortgaged |removed mortgage from ))(.+)$/i);
+              if (match) {
+                return (
+                  <>
+                    {match[1]}
+                    <Text style={{ fontFamily: Typography.bodySemibold, fontWeight: 'bold' }}>
+                      {match[2]}
+                    </Text>
+                  </>
+                );
+              }
+              return tx.label;
+            })()}
+          </Text>
         )}
       </View>
     </View>
@@ -155,7 +181,7 @@ export default function TransactionLog({
     const to = getEntity(tx.toEntityId);
     // REVERT is available only while the undo window is open
     const undoEntry = undoStack.find(e => e.transactionId === tx.id);
-    const canUndo = !tx.isReversed && !!undoEntry && now < undoEntry.expiresAt;
+    const canUndo = !tx.isReversed && !!undoEntry;
     return (
       <TransactionRow
         tx={tx}
@@ -385,9 +411,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   avatarBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 2,
     borderColor: Colors.ink,
     alignItems: 'center',
@@ -397,25 +423,32 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   avatarImage: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
   },
   entityName: {
-    fontSize: 10,
-    fontFamily: Typography.bodySemibold,
-    fontStyle: 'italic',
+    fontSize: 19,
+    fontFamily: Typography.display,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: Colors.ink,
     textAlign: 'center',
   },
-  amountCol: {
+  amountHeader: {
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 16,
+  },
+  arrowCol: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   arrowIcon: {
     fontSize: 24,
     color: 'rgba(0,0,0,0.2)',
   },
   amount: {
-    fontSize: 32,
+    fontSize: 22,
     fontFamily: Typography.display,
     color: Colors.ink,
     letterSpacing: 1,

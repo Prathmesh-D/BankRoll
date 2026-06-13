@@ -411,9 +411,14 @@ export default function Dashboard() {
         {displayMortgageTarget && (
           <SafeAreaView style={styles.modalSafe}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle} numberOfLines={1}>
-                {displayMortgageTarget.name}'s Properties
-              </Text>
+              <View style={styles.flex1}>
+                <Text style={styles.modalTitle} numberOfLines={1}>
+                  {displayMortgageTarget.name}'s Properties
+                </Text>
+                <Text style={styles.modalSubtitle}>
+                  Current Balance: {formatBalance(displayMortgageTarget.balance, editionConfig.currency)}
+                </Text>
+              </View>
               <TouchableOpacity onPress={() => setMortgageTargetId(null)}>
                 <Text style={styles.modalCloseIcon}>X</Text>
               </TouchableOpacity>
@@ -473,13 +478,22 @@ export default function Dashboard() {
                     setMortgageDialog({ properties: selectedMortgages, isMortgaged: isM });
                   }}
                 >
-                  <Text style={styles.confirmSelectionText}>
-                    CONFIRM {selectedMortgages.length} SELECTION{selectedMortgages.length > 1 ? 'S' : ''} (
-                    {formatBalance(
-                      selectedMortgages.reduce((sum, p) => sum + (isMortgaged(p.id, mortgageTarget) ? p.unmortgageCost : p.mortgageValue), 0),
-                      editionConfig.currency
-                    )})
-                  </Text>
+                  {(() => {
+                    const isM = isMortgaged(selectedMortgages[0].id, displayMortgageTarget);
+                    const amount = selectedMortgages.reduce((sum, p) => sum + (isM ? p.unmortgageCost : p.mortgageValue), 0);
+                    const formattedAmount = formatBalance(amount, editionConfig.currency);
+                    const newBalance = displayMortgageTarget.balance + (isM ? -amount : amount);
+                    return (
+                      <View style={{ alignItems: 'center' }}>
+                        <Text style={styles.confirmSelectionText}>
+                          CONFIRM ACTION ({isM ? '-' : '+'}{formattedAmount})
+                        </Text>
+                        <Text style={styles.confirmSelectionSubText}>
+                          New Balance: {formatBalance(newBalance, editionConfig.currency)}
+                        </Text>
+                      </View>
+                    );
+                  })()}
                 </AnimatedPressable>
               </View>
             )}
@@ -1015,7 +1029,8 @@ const styles = StyleSheet.create({
   },
   modalSafe: { flex: 1, backgroundColor: Colors.parchment, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
   modalHeader: { padding: 16, borderBottomWidth: 2, borderBottomColor: Colors.ink, backgroundColor: Colors.white, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalTitle: { fontFamily: Typography.display, fontSize: 24, color: Colors.ink, letterSpacing: 1, flex: 1 },
+  modalTitle: { fontFamily: Typography.display, fontSize: 24, color: Colors.ink, letterSpacing: 1 },
+  modalSubtitle: { fontFamily: Typography.bodySemibold, fontSize: 14, color: 'rgba(0,0,0,0.6)', marginTop: 2 },
   modalCloseIcon: { fontFamily: Typography.display, fontSize: 24, color: Colors.errorRed },
   bankruptContainer: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: Colors.parchment, borderBottomWidth: 2, borderBottomColor: Colors.ink, alignItems: 'center' },
   bankruptBtn: { paddingHorizontal: 24, paddingVertical: 12, backgroundColor: Colors.errorRed, borderWidth: 2, borderColor: Colors.ink, shadowColor: Colors.ink, shadowOffset: { width: 4, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 },
@@ -1044,5 +1059,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.white,
     letterSpacing: 1,
+  },
+  confirmSelectionSubText: {
+    fontFamily: Typography.bodySemibold,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
   },
 });

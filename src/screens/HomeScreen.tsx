@@ -151,8 +151,8 @@ export default function HomeScreen() {
             >
               <Text style={styles.deleteBtnText}>REMOVE</Text>
             </AnimatedPressable>
-            <FloatingView style={styles.resumeBtn} amplitude={isEnded ? 0 : 2} duration={2000}>
-              <Text style={styles.resumeBtnText}>{isEnded ? 'VIEW STATS' : 'RESUME'}</Text>
+            <FloatingView style={isEnded ? styles.statsBtn : styles.resumeBtn} amplitude={isEnded ? 0 : 2} duration={2000}>
+              <Text style={isEnded ? styles.statsBtnText : styles.resumeBtnText}>{isEnded ? 'VIEW STATS' : 'RESUME'}</Text>
             </FloatingView>
           </View>
         </View>
@@ -175,6 +175,10 @@ export default function HomeScreen() {
 
   const itemSeparator = useCallback(() => <View style={styles.separator} />, []);
 
+  const sortedSessions = React.useMemo(() => {
+    return [...sessionHistory].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
+  }, [sessionHistory]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView 
@@ -190,7 +194,7 @@ export default function HomeScreen() {
 
         <View style={styles.container}>
           <FlatList
-            data={sessionHistory.slice(0, 5)}
+            data={sortedSessions}
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={listHeader}
@@ -431,11 +435,26 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderWidth: 2,
     borderColor: Colors.ink,
+    borderStyle: 'solid',
     ...Shadows.btn,
     shadowColor: Colors.ink,
   },
   resumeBtnText: {
     color: Colors.white,
+    fontFamily: Typography.display,
+    fontSize: 14,
+    letterSpacing: 2,
+  },
+  statsBtn: {
+    backgroundColor: Colors.white,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: Colors.ink,
+    borderStyle: 'dashed',
+  },
+  statsBtnText: {
+    color: Colors.ink,
     fontFamily: Typography.display,
     fontSize: 14,
     letterSpacing: 2,
